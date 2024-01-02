@@ -23,13 +23,16 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
+	slogmulti "github.com/samber/slog-multi"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
+var logger *slog.Logger
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -84,6 +87,12 @@ func initConfig() {
 		viper.SetConfigName(".goabe")
 	}
 
+	// setup a default environment that can be overridden
+	viper.SetDefault("threads", 1)
+	log_level_text, err := slog.LevelInfo.MarshalText()
+	viper.SetDefault("log_level", log_level_text)
+	viper.SetDefault("log_file", "goabe.log.json")
+
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
@@ -91,6 +100,25 @@ func initConfig() {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	} else {
 		fmt.Fprintln(os.Stderr, "No configuration file found or specified.")
-		// call the default configuration
 	}
+
+	// initialize the system using the config data from viper
+	logfile, err := os.OpenFile(viper.GetString("log_file"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
+	// fanout over the stdout in text and goabe.log.json as json
+	defer logfile.Close()
+	log_level_text = []byte(viper.GetString("log_level"))
+	var log_level slog.Level
+	log_level.UnmarshalText(log_level_text)
+	opts := &slog.HandlerOptions{
+		Level: log_level,
+	}
+	logger = slog.New(
+		slogmulti.Fanout(
+			slog.NewJSONHandler(logfile, opts),
+			slog.NewTextHandler(os.Stdout, opts),
+		),
+	)
 }
