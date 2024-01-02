@@ -11,7 +11,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+// the name of the config file on the file system from the user (from cobra)
 var cfgFile string
+
+// the number of concurrent processes (threads) to try to use (from cobra)
 var Threads int
 
 // rootCmd represents the base command when called without any subcommands
@@ -48,7 +51,11 @@ func init() {
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-// initConfig reads in config file and ENV variables if set.
+// initConfig sets default config values and reads in config from input, if possible.
+// If the global cfgFile is set by cobra CLI handling (see init()), then this
+// function will try to read the config from that file.  If not, it will
+// try to find the config file in the home directory (i.e., .goabe.json). This
+// may need to change in the future to use a different default or even a URL.
 func initConfig() {
 	if cfgFile != "" {
 		// use config file specified by command line flag
@@ -80,6 +87,9 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		configFromFile = true
 	}
+
+	// set up the logger, this has to be done after the config is read in because
+	// it contains the name of the log output
 	logger.InitLogger()
 	if configFromFile {
 		logger.Log.With("config_file", viper.ConfigFileUsed()).Info("loaded config from file")
