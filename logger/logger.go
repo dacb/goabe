@@ -22,7 +22,7 @@ var Log *slog.Logger
 // based logging and the other on the json file.
 func InitLogger() {
 	// initialize the system using the config data from viper
-	logfile, err := os.OpenFile(viper.GetString("log_file"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	logfile, err := os.OpenFile(viper.GetString("log_file"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		panic(err)
 	}
