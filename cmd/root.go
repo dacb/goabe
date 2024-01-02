@@ -90,7 +90,7 @@ func initConfig() {
 	// setup a default environment that can be overridden
 	viper.SetDefault("threads", 1)
 	log_level_text, err := slog.LevelInfo.MarshalText()
-	viper.SetDefault("log_level", log_level_text)
+	viper.SetDefault("log_level", string(log_level_text))
 	viper.SetDefault("log_file", "goabe.log.json")
 
 	viper.AutomaticEnv() // read in environment variables that match
