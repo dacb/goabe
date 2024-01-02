@@ -81,12 +81,12 @@ func runCore(threads int) {
 	// iterate over steps
 	for step := int64(0); step < runSteps; step++ {
 		stepStartTime := time.Now()
-		logger.Log.With("cmd", "run").With("actor", "core").
-			With("step", step).Debug("starting")
+		//logger.Log.With("cmd", "run").With("actor", "core").
+		//	With("step", step).Debug("starting")
 		for subStep := 0; subStep < subSteps; subStep++ {
-			logger.Log.With("cmd", "run").With("actor", "core").
-				With("step", step).With("substep", subStep).
-				Debug("waiting")
+			//logger.Log.With("cmd", "run").With("actor", "core").
+			//	With("step", step).With("substep", subStep).
+			//	Debug("waiting")
 			for threadI := 0; threadI < threads; threadI++ {
 				cont := <-syncChan[threadI]
 				if cont == HALT {
@@ -126,22 +126,22 @@ func runThread(wgDone *sync.WaitGroup, syncChan chan engineMsg, name string, id 
 	// wait until released
 	state := <-syncChan
 	for step := int64(0); step < runSteps && state != HALT; step++ {
-		logger.Log.With("cmd", "run").With("actor", name).
-			With("step", step).Debug("starting")
+		//logger.Log.With("cmd", "run").With("actor", name).
+		//	With("step", step).Debug("starting")
 		for subStep := 0; subStep < subSteps && state != HALT; subStep++ {
-			workTimeMS := 5 + rand.Intn(5)
-			logger.Log.With("cmd", "run").With("actor", name).
-				With("step", step).With("substep", subStep).
-				With("workTimeMS", workTimeMS).Debug("working")
+			workTimeMS := 9 + rand.Intn(1)
+			//logger.Log.With("cmd", "run").With("actor", name).
+			//	With("step", step).With("substep", subStep).
+			//	With("workTimeMS", workTimeMS).Debug("working")
 			time.Sleep((time.Duration)(workTimeMS) * time.Millisecond)
-			logger.Log.With("cmd", "run").With("actor", name).
-				With("step", step).With("substep", subStep).
-				Debug("letting core know we are done")
+			//logger.Log.With("cmd", "run").With("actor", name).
+			//	With("step", step).With("substep", subStep).
+			//	Debug("letting core know we are done")
 			// send back our message that we are ready to continue
 			syncChan <- CONTINUE
-			logger.Log.With("cmd", "run").With("actor", name).
-				With("step", step).With("substep", subStep).
-				Debug("waiting for signal to continue")
+			//logger.Log.With("cmd", "run").With("actor", name).
+			//	With("step", step).With("substep", subStep).
+			//	Debug("waiting for signal to continue")
 			// wait for go ahead to continue
 			state = <-syncChan
 		}
