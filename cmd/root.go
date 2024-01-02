@@ -84,5 +84,5 @@ func initConfig() {
 		fmt.Fprintln(os.Stderr, "No configuration file found or specified.")
 	}
 
-	logger.log.Info("logging started")
+	logger.InitLogger()
 }
