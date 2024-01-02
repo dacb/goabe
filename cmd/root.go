@@ -3,8 +3,9 @@ package cmd
 import (
 	"fmt"
 	"log/slog"
-	log "logger"
 	"os"
+
+	"github.com/dacb/goabe/logger"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -68,6 +69,9 @@ func initConfig() {
 	// setup a default environment that can be overridden
 	viper.SetDefault("threads", 1)
 	log_level_text, err := slog.LevelInfo.MarshalText()
+	if err != nil {
+		panic(err)
+	}
 	viper.SetDefault("log_level", string(log_level_text))
 	viper.SetDefault("log_file", "goabe.log.json")
 
@@ -80,5 +84,5 @@ func initConfig() {
 		fmt.Fprintln(os.Stderr, "No configuration file found or specified.")
 	}
 
-	log.Debug("test")
+	logger.log.Info("logging started")
 }
