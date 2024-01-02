@@ -3,11 +3,14 @@ package cmd
 import (
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/dacb/goabe/logger"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var runSteps int64
@@ -59,37 +62,75 @@ const (
 )
 
 func runCore(threads int) {
+	subSteps := viper.GetInt("substeps")
 	// this waitgroup is used to signal the close of the threads
 	wgThreadsDone := new(sync.WaitGroup)
 	wgThreadsDone.Add(threads)
 	// channels
-	syncChan := make(chan engineMsg)
+	syncChan := make([]chan engineMsg, threads)
 
 	// spawn the threads
-	for i := 0; i < threads; i++ {
-		go runThread(wgThreadsDone, syncChan, fmt.Sprintf("thread_%d", i), i)
+	for threadI := 0; threadI < threads; threadI++ {
+		syncChan[threadI] = make(chan engineMsg)
+		go runThread(wgThreadsDone, syncChan[threadI], fmt.Sprintf("thread_%d", threadI), threadI)
+	}
+	// release the threads
+	for threadI := 0; threadI < threads; threadI++ {
+		syncChan[threadI] <- CONTINUE
 	}
 	// iterate over steps
 	for step := int64(0); step < runSteps; step++ {
-		for threadI := 0; threadI < threads; threadI++ {
-			// release the threads
-			logger.Log.Debug(fmt.Sprintf("releasing thread %d on step %d", threadI, step))
-			syncChan <- CONTINUE
+		logger.Log.With("cmd", "run").With("actor", "core").
+			With("step", step).Info("starting")
+		for subStep := 0; subStep < subSteps; subStep++ {
+			logger.Log.With("cmd", "run").With("actor", "core").
+				With("step", step).With("substep", subStep).
+				Debug("waiting")
+			for threadI := 0; threadI < threads; threadI++ {
+				cont := <-syncChan[threadI]
+				if cont == HALT {
+					logger.Log.With("cmd", "run").Info("received HALT message from thread, shutting down core")
+					panic("unimplemented graceful termination")
+				}
+				// release the thread
+				syncChan[threadI] <- CONTINUE
+			}
+			// do atomic stuff at end of substep
 		}
-	}
-	for threadI := 0; threadI < threads; threadI++ {
-		syncChan <- HALT
+		// do atomic stuff at end of step
 	}
 	// wait until the threads are done
+	logger.Log.With("cmd", "run").With("actor", "core").Debug("waiting for threads")
 	wgThreadsDone.Wait()
+	logger.Log.With("cmd", "run").With("actor", "core").Debug("done")
 }
 
 func runThread(wgDone *sync.WaitGroup, syncChan chan engineMsg, name string, id int) {
 	defer wgDone.Done()
-	logger.Log.Debug(fmt.Sprintf("thread %s started", name))
+	logger.Log.With("cmd", "run").With("actor", name).Debug("started")
+
+	// configure the thread
+	subSteps := viper.GetInt("substeps")
+
+	// wait until released
 	state := <-syncChan
-	for state != HALT {
-		logger.Log.Debug(fmt.Sprintf("thread %s heartbeat %d", name, id))
-		state = <-syncChan
+	for step := int64(0); step < runSteps && state != HALT; step++ {
+		logger.Log.With("cmd", "run").With("actor", name).
+			With("step", step).Debug("starting")
+		for subStep := 0; subStep < subSteps && state != HALT; subStep++ {
+			workTimeMS := 100 + rand.Intn(500)
+			logger.Log.With("cmd", "run").With("actor", name).
+				With("step", step).With("substep", subStep).
+				With("workTimeMS", workTimeMS).Debug("working")
+			time.Sleep((time.Duration)(workTimeMS) * time.Millisecond)
+			logger.Log.With("cmd", "run").With("actor", name).
+				With("step", step).With("substep", subStep).
+				Debug("phoning home")
+			syncChan <- CONTINUE
+			logger.Log.With("cmd", "run").With("actor", name).
+				With("step", step).With("substep", subStep).
+				Debug("chilling for et to hit me back up")
+			state = <-syncChan
+		}
 	}
 }
