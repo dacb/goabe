@@ -51,16 +51,19 @@ func init() {
 }
 
 func runCore(threads int) {
-	wgThreads := new(sync.WaitGroup)
-	wgThreads.Add(threads)
+	wgThreadsDone := new(sync.WaitGroup)
+	wgThreadsDone.Add(threads)
 	for i := 0; i < threads; i++ {
-		go runThread(wgThreads, fmt.Sprintf("thread_%d", i), i+1)
+		go runThread(wgThreadsDone, fmt.Sprintf("thread_%d", i), i+1)
 	}
-	wgThreads.Wait()
+	for step := int64(0); step < runSteps; step++ {
+
+	}
+	wgThreadsDone.Wait()
 }
 
-func runThread(wg *sync.WaitGroup, name string, actions int) {
-	defer wg.Done()
+func runThread(wgDone *sync.WaitGroup, name string, actions int) {
+	defer wgDone.Done()
 	logger.Log.Info(fmt.Sprintf("thread %s started", name))
 	for i := 0; i < actions; i++ {
 		logger.Log.Debug(fmt.Sprintf("thread %s heartbeat %d", name, i+1))
