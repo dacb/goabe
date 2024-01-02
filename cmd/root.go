@@ -12,6 +12,7 @@ import (
 )
 
 var cfgFile string
+var Threads int
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -40,6 +41,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.goabe.json)")
+	rootCmd.PersistentFlags().IntVar(&Threads, "threads", 1, "concurrent threads (default is 1)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -63,7 +65,6 @@ func initConfig() {
 	}
 
 	// setup a default environment that can be overridden
-	viper.SetDefault("threads", 1)
 	log_level_text, err := slog.LevelInfo.MarshalText()
 	if err != nil {
 		panic(err)
@@ -74,12 +75,16 @@ func initConfig() {
 	// read in environment variables
 	viper.AutomaticEnv()
 
-	// If a config file is found, read it in.
+	// if a config file is found, read it in
+	configFromFile := false
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-	} else {
-		fmt.Fprintln(os.Stderr, "No configuration file found or specified.")
+		configFromFile = true
 	}
-
 	logger.InitLogger()
+	if configFromFile {
+		logger.Log.With("config_file", viper.ConfigFileUsed()).Info("loaded config from file")
+	} else {
+		logger.Log.Info("no configuration file found and/or specified; using defaults")
+	}
+	logger.Log.Info(fmt.Sprintf("using %d threads", Threads))
 }
