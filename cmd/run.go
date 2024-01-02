@@ -50,23 +50,46 @@ func init() {
 	runCmd.Flags().Int64VarP(&runSteps, "steps", "", 0, "Number of steps to run the engine")
 }
 
+//go:generate stringer -type=engineMsg
+type engineMsg int
+
+const (
+	HALT engineMsg = iota
+	CONTINUE
+)
+
 func runCore(threads int) {
+	// this waitgroup is used to signal the close of the threads
 	wgThreadsDone := new(sync.WaitGroup)
 	wgThreadsDone.Add(threads)
-	for i := 0; i < threads; i++ {
-		go runThread(wgThreadsDone, fmt.Sprintf("thread_%d", i), i+1)
-	}
-	for step := int64(0); step < runSteps; step++ {
+	// channels
+	syncChan := make(chan engineMsg)
 
+	// spawn the threads
+	for i := 0; i < threads; i++ {
+		go runThread(wgThreadsDone, syncChan, fmt.Sprintf("thread_%d", i), i)
 	}
+	// iterate over steps
+	for step := int64(0); step < runSteps; step++ {
+		for threadI := 0; threadI < threads; threadI++ {
+			// release the threads
+			logger.Log.Debug(fmt.Sprintf("releasing thread %d on step %d", threadI, step))
+			syncChan <- CONTINUE
+		}
+	}
+	for threadI := 0; threadI < threads; threadI++ {
+		syncChan <- HALT
+	}
+	// wait until the threads are done
 	wgThreadsDone.Wait()
 }
 
-func runThread(wgDone *sync.WaitGroup, name string, actions int) {
+func runThread(wgDone *sync.WaitGroup, syncChan chan engineMsg, name string, id int) {
 	defer wgDone.Done()
-	logger.Log.Info(fmt.Sprintf("thread %s started", name))
-	for i := 0; i < actions; i++ {
-		logger.Log.Debug(fmt.Sprintf("thread %s heartbeat %d", name, i+1))
-		//time.Sleep(time.Millisecond * time.Duration(500))
+	logger.Log.Debug(fmt.Sprintf("thread %s started", name))
+	state := <-syncChan
+	for state != HALT {
+		logger.Log.Debug(fmt.Sprintf("thread %s heartbeat %d", name, id))
+		state = <-syncChan
 	}
 }
