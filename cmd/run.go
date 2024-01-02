@@ -80,7 +80,7 @@ func runCore(threads int) {
 	}
 	// iterate over steps
 	for step := int64(0); step < runSteps; step++ {
-		startStepTime := time.Now()
+		stepStartTime := time.Now()
 		logger.Log.With("cmd", "run").With("actor", "core").
 			With("step", step).Debug("starting")
 		for subStep := 0; subStep < subSteps; subStep++ {
@@ -99,7 +99,7 @@ func runCore(threads int) {
 			}
 			if subStep == subSteps-1 {
 				// do atomic stuff at end of step
-				runTimeMS := int((time.Now() - stepStartTime) * time.Millisecond)
+				runTimeMS := time.Now().Sub(stepStartTime)
 				logger.Log.With("cmd", "run").With("actor", "core").
 					With("step", step).With("run_time", runTimeMS).Info("finished")
 			}
@@ -129,18 +129,20 @@ func runThread(wgDone *sync.WaitGroup, syncChan chan engineMsg, name string, id 
 		logger.Log.With("cmd", "run").With("actor", name).
 			With("step", step).Debug("starting")
 		for subStep := 0; subStep < subSteps && state != HALT; subStep++ {
-			workTimeMS := 100 + rand.Intn(500)
+			workTimeMS := 5 + rand.Intn(5)
 			logger.Log.With("cmd", "run").With("actor", name).
 				With("step", step).With("substep", subStep).
 				With("workTimeMS", workTimeMS).Debug("working")
 			time.Sleep((time.Duration)(workTimeMS) * time.Millisecond)
 			logger.Log.With("cmd", "run").With("actor", name).
 				With("step", step).With("substep", subStep).
-				Debug("phoning home")
+				Debug("letting core know we are done")
+			// send back our message that we are ready to continue
 			syncChan <- CONTINUE
 			logger.Log.With("cmd", "run").With("actor", name).
 				With("step", step).With("substep", subStep).
-				Debug("chilling for et to hit me back up")
+				Debug("waiting for signal to continue")
+			// wait for go ahead to continue
 			state = <-syncChan
 		}
 	}
