@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
-	"time"
 
 	"github.com/dacb/goabe/logger"
 
@@ -64,7 +63,7 @@ func runThread(wg *sync.WaitGroup, name string, actions int) {
 	defer wg.Done()
 	logger.Log.Info(fmt.Sprintf("thread %s started", name))
 	for i := 0; i < actions; i++ {
-		logger.Log.Info(fmt.Sprintf("thread %d heartbeat %d", name, i+1))
-		time.Sleep(time.Millisecond * time.Duration(500))
+		logger.Log.Debug(fmt.Sprintf("thread %s heartbeat %d", name, i+1))
+		//time.Sleep(time.Millisecond * time.Duration(500))
 	}
 }
