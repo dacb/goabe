@@ -9,9 +9,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-var log *slog.Logger
+var Log *slog.Logger
 
-func initLogger() {
+func InitLogger() {
 	fmt.Println(viper.GetString("log_file"), "log_file")
 	// initialize the system using the config data from viper
 	logfile, err := os.OpenFile(viper.GetString("log_file"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -25,10 +25,11 @@ func initLogger() {
 	opts := &slog.HandlerOptions{
 		Level: log_level,
 	}
-	log = slog.New(
+	Log = slog.New(
 		slogmulti.Fanout(
 			slog.NewJSONHandler(logfile, opts),
 			slog.NewTextHandler(os.Stdout, opts),
 		),
 	)
+	Log.Info("logging initialized")
 }
