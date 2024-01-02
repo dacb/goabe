@@ -80,8 +80,9 @@ func runCore(threads int) {
 	}
 	// iterate over steps
 	for step := int64(0); step < runSteps; step++ {
+		startStepTime := time.Now()
 		logger.Log.With("cmd", "run").With("actor", "core").
-			With("step", step).Info("starting")
+			With("step", step).Debug("starting")
 		for subStep := 0; subStep < subSteps; subStep++ {
 			logger.Log.With("cmd", "run").With("actor", "core").
 				With("step", step).With("substep", subStep).
@@ -92,12 +93,22 @@ func runCore(threads int) {
 					logger.Log.With("cmd", "run").Info("received HALT message from thread, shutting down core")
 					panic("unimplemented graceful termination")
 				}
-				// release the thread
-				syncChan[threadI] <- CONTINUE
 			}
 			// do atomic stuff at end of substep
+			{
+			}
+			if subStep == subSteps-1 {
+				// do atomic stuff at end of step
+				runTimeMS := int((time.Now() - stepStartTime) * time.Millisecond)
+				logger.Log.With("cmd", "run").With("actor", "core").
+					With("step", step).With("run_time", runTimeMS).Info("finished")
+			}
+
+			// release the threads
+			for threadI := 0; threadI < threads; threadI++ {
+				syncChan[threadI] <- CONTINUE
+			}
 		}
-		// do atomic stuff at end of step
 	}
 	// wait until the threads are done
 	logger.Log.With("cmd", "run").With("actor", "core").Debug("waiting for threads")
