@@ -78,6 +78,7 @@ func initConfig() {
 	}
 	viper.SetDefault("log_level", string(log_level_text))
 	viper.SetDefault("log_file", "goabe.log.json")
+	viper.SetDefault("substeps", 8)
 
 	// read in environment variables
 	viper.AutomaticEnv()
