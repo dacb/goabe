@@ -1,38 +1,16 @@
-/*
-Copyright © 2024 Dave Beck <dacb@uw.edu>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
 package cmd
 
 import (
 	"fmt"
 	"log/slog"
+	log "logger"
 	"os"
 
-	slogmulti "github.com/samber/slog-multi"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
-var logger *slog.Logger
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -102,23 +80,5 @@ func initConfig() {
 		fmt.Fprintln(os.Stderr, "No configuration file found or specified.")
 	}
 
-	// initialize the system using the config data from viper
-	logfile, err := os.OpenFile(viper.GetString("log_file"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		panic(err)
-	}
-	// fanout over the stdout in text and goabe.log.json as json
-	defer logfile.Close()
-	log_level_text = []byte(viper.GetString("log_level"))
-	var log_level slog.Level
-	log_level.UnmarshalText(log_level_text)
-	opts := &slog.HandlerOptions{
-		Level: log_level,
-	}
-	logger = slog.New(
-		slogmulti.Fanout(
-			slog.NewJSONHandler(logfile, opts),
-			slog.NewTextHandler(os.Stdout, opts),
-		),
-	)
+	log.Debug("test")
 }
