@@ -20,6 +20,8 @@ var Log *slog.Logger
 // read from whatever file specified by the command line arguments.
 // This tooling runs dual logging streams: one on the stdout for text
 // based logging and the other on the json file.
+// This function will clobber (i.e., overwrite and truncate) any
+// existing contents of the log file.
 func InitLogger() {
 	// initialize the system using the config data from viper
 	logfile, err := os.OpenFile(viper.GetString("log_file"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
