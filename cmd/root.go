@@ -16,13 +16,9 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "goabe",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Go Agent Based Engine (goabe)",
+	Long: `A scalable, parallel engine for simulation
+and analysis of agent based computations.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -47,20 +43,20 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {
-		// Use config file from the flag.
+		// use config file specified by command line flag
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
+		// identify home dir for user
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".goabe" (without extension).
+		// search config in home directory with name ".goabe" w/ .json
 		viper.AddConfigPath(home)
 		viper.SetConfigType("json")
 		viper.SetConfigName(".goabe")
@@ -75,7 +71,8 @@ func initConfig() {
 	viper.SetDefault("log_level", string(log_level_text))
 	viper.SetDefault("log_file", "goabe.log.json")
 
-	viper.AutomaticEnv() // read in environment variables that match
+	// read in environment variables
+	viper.AutomaticEnv()
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {

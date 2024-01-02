@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 
@@ -12,7 +11,6 @@ import (
 var Log *slog.Logger
 
 func InitLogger() {
-	fmt.Println(viper.GetString("log_file"), "log_file")
 	// initialize the system using the config data from viper
 	logfile, err := os.OpenFile(viper.GetString("log_file"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
