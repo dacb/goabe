@@ -1,10 +1,15 @@
 package main
 
+import "context"
+
 // the empty struct used for the plugin
 type plugin struct {
 }
 
 // returns the version of plugin in major, minor, and patch
+func (p *plugin) Init(ctx context.Context) {
+}
+
 // levels as separate integers
 func (p *plugin) Version() (int, int, int) {
 	return 0, 1, 0
