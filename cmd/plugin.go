@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/dacb/goabe/logger"
 	"github.com/dacb/goabe/plugins"
 	"github.com/spf13/cobra"
 )
@@ -14,11 +16,13 @@ var pluginCmd = &cobra.Command{
 	Long:  `Some tools, including 'list' to work with goabe plugins.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("plugin called")
-		plg, err := plugins.LoadPlugIn("plugins/example.so")
+		plg, err := plugins.LoadPlugIn("plugins/example/example.so")
 		if err != nil {
 			panic(err)
 		}
-		(*plg).Init()
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, "log", logger.Log)
+		(*plg).Init(ctx)
 	},
 }
 

@@ -1,9 +1,10 @@
 package plugins
 
 import (
-	"fmt"
 	"context"
-	"log/slog"
+	"errors"
+	"fmt"
+	"plugin"
 )
 
 type PlugIn interface {
@@ -13,12 +14,7 @@ type PlugIn interface {
 	Description() string
 }
 
-type PlugInVersion (p *plugin)func() (int, int, int)
-type PlugInDescription (p *plugin)func() string
-type PlugInName (p *plugin)func() string
-type PlugInInit func(ctx_in context.Context) (PlugInVersion, PlugInName, PlugInDescription)
-
-func LoadPlugIn(filename string) (PlugInInit, err) {
+func LoadPlugIn(filename string) (*PlugIn, error) {
 	plg, err := plugin.Open(filename)
 	if err != nil {
 		return nil, err
@@ -33,7 +29,7 @@ func LoadPlugIn(filename string) (PlugInInit, err) {
 }
 
 // this is based on the example in the go docs
-func lookUpSymbol[M any](plugin *plugin.PlugIn, symbolName string) (*M, error) {
+func lookUpSymbol[M any](plugin *plugin.Plugin, symbolName string) (*M, error) {
 	symbol, err := plugin.Lookup(symbolName)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,10 @@
 package main
 
-import "context"
+import (
+	"context"
+	"fmt"
+	"log/slog"
+)
 
 // the empty struct used for the plugin
 type plugin struct {
@@ -8,6 +12,11 @@ type plugin struct {
 
 // returns the version of plugin in major, minor, and patch
 func (p *plugin) Init(ctx context.Context) {
+	log, ok := ctx.Value("log").(*slog.Logger)
+	if !ok {
+		panic(fmt.Errorf("unable to find the logger value in the current context"))
+	}
+	log.With("plugin", "example").Info("example plugin Init function was called")
 }
 
 // levels as separate integers
