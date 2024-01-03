@@ -82,6 +82,10 @@ func initConfig() {
 	if configFromFile {
 		logger.Log.With("config_file", viper.ConfigFileUsed()).Info("loaded config from file")
 	} else {
+		if cfgFile != "" {
+			logger.Log.With("config_file", viper.ConfigFileUsed()).Error("unable to read configuration file")
+			panic(fmt.Errorf("unable to read configuration from %s", viper.ConfigFileUsed()))
+		}
 		logger.Log.Info("no configuration file found and/or specified; using defaults")
 	}
 	logger.Log.Info(fmt.Sprintf("using %d threads", Threads))
