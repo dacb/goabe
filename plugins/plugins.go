@@ -1,12 +1,12 @@
 package plugins
 
 import (
-	"fmt",
-	"context",
-	"log/slog",
+	"fmt"
+	"context"
+	"log/slog"
 )
 
-struct PlugIn interface {
+type PlugIn interface {
 	Init(ctx context.Context)
 	Name() string
 	Version() (int, int, int)
