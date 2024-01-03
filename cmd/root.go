@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"log/slog"
 	"math/rand"
 	"os"
-	"time"
 
 	"github.com/dacb/goabe/logger"
 
@@ -45,7 +43,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.goabe.json)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./goabe.json)")
 	rootCmd.PersistentFlags().IntVar(&Threads, "threads", 1, "concurrent threads (default is 1)")
 
 	// Cobra also supports local flags, which will only run
@@ -63,25 +61,11 @@ func initConfig() {
 		// use config file specified by command line flag
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// identify home dir for user
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		// search config in home directory with name ".goabe" w/ .json
-		viper.AddConfigPath(home)
+		// search for config file in current directory w/ name goabe.json
+		viper.AddConfigPath(".")
 		viper.SetConfigType("json")
-		viper.SetConfigName(".goabe")
+		viper.SetConfigName("goabe")
 	}
-
-	// setup a default environment that can be overridden
-	log_level_text, err := slog.LevelInfo.MarshalText()
-	if err != nil {
-		panic(err)
-	}
-	viper.SetDefault("log_level", string(log_level_text))
-	viper.SetDefault("log_file", "goabe.log.json")
-	viper.SetDefault("substeps", 10)
-	viper.SetDefault("random_seed", time.Now().UnixNano())
 
 	// read in environment variables
 	viper.AutomaticEnv()
