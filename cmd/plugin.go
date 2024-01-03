@@ -16,13 +16,16 @@ var pluginCmd = &cobra.Command{
 	Long:  `Some tools, including 'list' to work with goabe plugins.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("plugin called")
-		plg, err := plugins.LoadPlugIn("plugins/example/example.so")
+		pluginFilename := "plugins/example/example.so"
+		plg, err := plugins.LoadPlugIn(pluginFilename)
 		if err != nil {
 			panic(err)
 		}
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, "log", logger.Log)
+		ctx = context.WithValue(ctx, "log", logger.Log.With("plugin", pluginFilename))
 		(*plg).Init(ctx)
+		(*plg).Name()
+		(*plg).Description()
 	},
 }
 
