@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"log/slog"
-	"math/rand"
 	"sync"
 	"time"
 
@@ -75,12 +74,12 @@ func runCore(threads int) {
 		go runThread(wgThreadsDone, syncChan[threadI], fmt.Sprintf("thread_%d", threadI), threadI)
 	}
 	// release the threads
+	stepStartTime := time.Now()
 	for threadI := 0; threadI < threads; threadI++ {
 		syncChan[threadI] <- CONTINUE
 	}
 	// iterate over steps
 	for step := int64(0); step < runSteps; step++ {
-		stepStartTime := time.Now()
 		//logger.Log.With("cmd", "run").With("actor", "core").
 		//	With("step", step).Debug("starting")
 		for subStep := 0; subStep < subSteps; subStep++ {
@@ -99,9 +98,10 @@ func runCore(threads int) {
 			}
 			if subStep == subSteps-1 {
 				// do atomic stuff at end of step
-				runTimeMS := time.Now().Sub(stepStartTime)
+				runTime := time.Now().Sub(stepStartTime)
 				logger.Log.With("cmd", "run").With("actor", "core").
-					With("step", step).With("run_time", runTimeMS).Info("finished")
+					With("step", step).With("run_time", runTime).Info("finished")
+				stepStartTime = time.Now()
 			}
 
 			// release the threads
@@ -129,7 +129,7 @@ func runThread(wgDone *sync.WaitGroup, syncChan chan engineMsg, name string, id 
 		//logger.Log.With("cmd", "run").With("actor", name).
 		//	With("step", step).Debug("starting")
 		for subStep := 0; subStep < subSteps && state != HALT; subStep++ {
-			workTimeMS := 9 + rand.Intn(1)
+			workTimeMS := 10 // + rand.Intn(10)
 			//logger.Log.With("cmd", "run").With("actor", name).
 			//	With("step", step).With("substep", subStep).
 			//	With("workTimeMS", workTimeMS).Debug("working")
