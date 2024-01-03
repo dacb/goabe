@@ -54,7 +54,7 @@ func init() {
 // initConfig sets default config values and reads in config from input, if possible.
 // If the global cfgFile is set by cobra CLI handling (see init()), then this
 // function will try to read the config from that file.  If not, it will
-// try to find the config file in the home directory (i.e., .goabe.json). This
+// try to find the config file in the current directory (i.e., goabe.json). This
 // may need to change in the future to use a different default or even a URL.
 func initConfig() {
 	if cfgFile != "" {
