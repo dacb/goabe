@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/dacb/goabe/logger"
+	"github.com/dacb/goabe/plugins"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +20,23 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
+		// find the plugin directory list from the config
+		//pluginDirStr := viper.GetString("plugin_dir")
+
+		// iterate over the directories finding each .so file
+		// open each file and try to call the basic functions
+		// incuding Init, Name, Version, Description
+		fmt.Println("plugin called")
+		pluginFilename := "plugins/example/example.so"
+		plg, err := plugins.LoadPlugIn(pluginFilename)
+		if err != nil {
+			panic(err)
+		}
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, "log", logger.Log.With("plugin", pluginFilename))
+		(*plg).Init(ctx)
+		(*plg).Name()
+		(*plg).Description()
 	},
 }
 
