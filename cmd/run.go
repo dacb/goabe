@@ -83,6 +83,10 @@ func runCore(ctx context.Context, threads int) {
 	for threadI := 0; threadI < threads; threadI++ {
 		syncChan[threadI] <- CONTINUE
 	}
+
+	log = log.With("actor", "core")
+	ctx = context.WithValue(ctx, "log", log)
+
 	// iterate over steps
 	for step := int64(0); step < runSteps; step++ {
 		//logger.Log.With("cmd", "run").With("actor", "core").
@@ -94,7 +98,7 @@ func runCore(ctx context.Context, threads int) {
 			for threadI := 0; threadI < threads; threadI++ {
 				cont := <-syncChan[threadI]
 				if cont == HALT {
-					logger.Log.With("cmd", "run").Info("received HALT message from thread, shutting down core")
+					log.Info("received HALT message from thread, shutting down core")
 					panic("unimplemented graceful termination")
 				}
 			}
@@ -104,8 +108,7 @@ func runCore(ctx context.Context, threads int) {
 			if subStep == subSteps-1 {
 				// do atomic stuff at end of step
 				runTime := time.Now().Sub(stepStartTime)
-				logger.Log.With("cmd", "run").With("actor", "core").
-					With("step", step).With("run_time", runTime).Info("finished")
+				log.With("step", step).With("run_time", runTime).Info("finished")
 				stepStartTime = time.Now()
 			}
 
