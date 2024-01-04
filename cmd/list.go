@@ -3,10 +3,13 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"path/filepath"
 
 	"github.com/dacb/goabe/logger"
 	"github.com/dacb/goabe/plugins"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // listCmd represents the list command
@@ -20,23 +23,36 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		logger.Log.With("cmd", "plugin").Info("plugin list called")
+		var pluginFiles []string
 		// find the plugin directory list from the config
-		//pluginDirStr := viper.GetString("plugin_dir")
+		pluginDir := viper.GetString("plugin_dir")
+		filepath.WalkDir(pluginDir, func(str string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if filepath.Ext(d.Name()) == ".so" {
+				pluginFiles = append(pluginFiles, str)
+			}
+			return nil
+		})
+		logger.Log.With("cmd", "plugin").Info(fmt.Sprintf("found %d plugins", len(pluginFiles)))
 
 		// iterate over the directories finding each .so file
 		// open each file and try to call the basic functions
 		// incuding Init, Name, Version, Description
-		fmt.Println("plugin called")
-		pluginFilename := "plugins/example/example.so"
-		plg, err := plugins.LoadPlugIn(pluginFilename)
-		if err != nil {
-			panic(err)
+		for _, pluginFilename := range pluginFiles {
+			logger.Log.With("cmd", "plugin").Info(fmt.Sprintf("loading plugin from file %s", pluginFilename))
+			plg, err := plugins.LoadPlugIn(pluginFilename)
+			if err != nil {
+				panic(err)
+			}
+			ctx := context.Background()
+			ctx = context.WithValue(ctx, "log", logger.Log.With("plugin", pluginFilename))
+			(*plg).Init(ctx)
+			(*plg).Name()
+			(*plg).Description()
 		}
-		ctx := context.Background()
-		ctx = context.WithValue(ctx, "log", logger.Log.With("plugin", pluginFilename))
-		(*plg).Init(ctx)
-		(*plg).Name()
-		(*plg).Description()
 	},
 }
 
