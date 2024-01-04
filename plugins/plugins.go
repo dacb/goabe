@@ -1,5 +1,7 @@
 package plugins
 
+//go:generate echo hi
+
 import (
 	"context"
 	"errors"

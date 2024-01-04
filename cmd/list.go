@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/dacb/goabe/logger"
 	"github.com/dacb/goabe/plugins"
@@ -26,17 +28,25 @@ to quickly create a Cobra application.`,
 		logger.Log.With("cmd", "plugin").Info("plugin list called")
 		var pluginFiles []string
 		// find the plugin directory list from the config
-		pluginDir := viper.GetString("plugin_dir")
-		filepath.WalkDir(pluginDir, func(str string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
+		// these should be separated by ':'
+		pluginDirsList := viper.GetString("plugin_dirs")
+		pluginDirs := strings.Split(pluginDirsList, ":")
+		for _, pluginDir := range pluginDirs {
+			if stat, err := os.Stat(pluginDir); err != nil || !stat.IsDir() {
+				logger.Log.Error(fmt.Sprintf("unable to open the plugin directory '%s'", pluginDir))
+				panic(err)
 			}
-			if filepath.Ext(d.Name()) == ".so" {
-				pluginFiles = append(pluginFiles, str)
-			}
-			return nil
-		})
-		logger.Log.With("cmd", "plugin").Info(fmt.Sprintf("found %d plugins", len(pluginFiles)))
+			filepath.WalkDir(pluginDir, func(str string, d fs.DirEntry, err error) error {
+				if err != nil {
+					return err
+				}
+				if filepath.Ext(d.Name()) == ".so" {
+					pluginFiles = append(pluginFiles, str)
+				}
+				return nil
+			})
+			logger.Log.With("cmd", "plugin").Info(fmt.Sprintf("plugin directory %s contained %d plugins", pluginDir, len(pluginFiles)))
+		}
 
 		// iterate over the directories finding each .so file
 		// open each file and try to call the basic functions
