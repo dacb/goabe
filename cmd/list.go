@@ -60,8 +60,11 @@ to quickly create a Cobra application.`,
 			ctx := context.Background()
 			ctx = context.WithValue(ctx, "log", logger.Log.With("plugin", pluginFilename))
 			(*plg).Init(ctx)
-			(*plg).Name()
-			(*plg).Description()
+			name := (*plg).Name()
+			description := (*plg).Description()
+			callbacks := (*plg).GetHooks()
+			logger.Log.With("cmd", "plugin").With("description", description).
+				Info(fmt.Sprintf("plugin %s had %d call backs", name, len(callbacks)))
 		}
 	},
 }

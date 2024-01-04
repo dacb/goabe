@@ -1,7 +1,5 @@
 package plugins
 
-//go:generate echo hi
-
 import (
 	"context"
 	"errors"
@@ -9,11 +7,19 @@ import (
 	"plugin"
 )
 
+type Hook struct {
+	Step    int
+	SubStep int
+	Core    func() error
+	Thread  func(id int, name string) error
+}
+
 type PlugIn interface {
-	Init(ctx context.Context)
+	Init(context.Context) error
 	Name() string
 	Version() (int, int, int)
 	Description() string
+	GetHooks() []Hook
 }
 
 func LoadPlugIn(filename string) (*PlugIn, error) {
