@@ -1,11 +1,20 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"log/slog"
 	"time"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
+
+type Config struct {
+	LogLevel   string `mapstructure:"log_level"`
+	LogFile    string `mapstructure:"log_file"`
+	Substeps   int    `mapstructure:"substeps"`
+	RandomSeed int64  `mapstructure:"random_seed"`
+	PluginDir  string `mapstructure:"plugin_dir"`
+}
 
 // configCmd represents the config command
 var configCmd = &cobra.Command{
@@ -39,4 +48,5 @@ func init() {
 	viper.SetDefault("log_file", "goabe.log.json")
 	viper.SetDefault("substeps", 10)
 	viper.SetDefault("random_seed", time.Now().UnixNano())
+	viper.SetDefault("plugin_dir", "plugins/example")
 }
