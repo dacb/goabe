@@ -57,8 +57,8 @@ func (p *plugin) GetHooks() []plugins.Hook {
 	log.Debug("example plugin GetHooks function was called")
 
 	var hooks []plugins.Hook
-	hooks = append(hooks, plugins.Hook{0, 0, nil, ThreadSubStep1, "thread sum"})
-	hooks = append(hooks, plugins.Hook{0, 1, CoreSubStep0, nil, "core sum"})
+	hooks = append(hooks, plugins.Hook{0, nil, ThreadSubStep0, "thread sum"})
+	hooks = append(hooks, plugins.Hook{1, CoreSubStep1, nil, "core sum"})
 
 	return hooks
 }
@@ -70,15 +70,15 @@ func (p *plugin) Filename() string {
 }
 
 // note this logs through the context
-func CoreSubStep0(ctx context.Context) error {
+func CoreSubStep1(ctx context.Context) error {
 	log := ctx.Value("log").(*slog.Logger)
-	log.With("actor", "core").Debug("core substep 0 hook called")
+	log.With("actor", "core").Info("core substep 0 hook called")
 	return nil
 }
 
 // note this logs through the context
-func ThreadSubStep1(ctx context.Context, id int, name string) error {
+func ThreadSubStep0(ctx context.Context, id int, name string) error {
 	log := ctx.Value("log").(*slog.Logger)
-	log.With("actor", name).Debug("core substep 0 hook called")
+	log.With("actor", name).Info("thread substep 0 hook called")
 	return nil
 }

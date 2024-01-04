@@ -41,6 +41,7 @@ them`,
 			log.Error("an error occurred loading the plugins")
 			panic(err)
 		}
+		setupPluginHooks(ctx)
 
 		runCore(ctx, Threads)
 	},
@@ -69,22 +70,23 @@ const (
 	CONTINUE
 )
 
-type SubStepHook struct {
-	Step    int
-	SubStep int
+var pluginHooks map[int][]plugins.Hook
+
+func setupPluginHooks(ctx context.Context) {
+	pluginHooks = make(map[int][]plugins.Hook)
+	for _, plugin := range plugins.LoadedPlugins {
+		hooks := (*plugin).GetHooks()
+		for _, hook := range hooks {
+			subStep := hook.SubStep
+			pluginHooks[subStep] = append(pluginHooks[subStep], hook)
+		}
+	}
 }
-
-//var pluginHooks map[[2]int]*SubStepHook{}
-
-//func setupPluginHooks(ctx context.Context) {
-//	for _, plugin := range plugins.LoadedPlugins {
-//		hooks := (*plugin).
-//	}
-//}
 
 func runCore(ctx context.Context, threads int) {
 	// this is the logger from the command context
 	log := ctx.Value("log").(*slog.Logger)
+
 	subSteps := viper.GetInt("substeps")
 	// this waitgroup is used to signal the close of the threads
 	wgThreadsDone := new(sync.WaitGroup)
@@ -126,8 +128,19 @@ func runCore(ctx context.Context, threads int) {
 			}
 
 			// do atomic stuff at end of substep
+			// for each plugin that is registered for the core at this step and substep
 			{
-				//plugin
+				hooks := pluginHooks[subStep]
+				for _, hook := range hooks {
+					if hook.Core != nil {
+						err := hook.Core(ctx)
+						if err != nil {
+							// can this be made to report the plug in as well?
+							log.Error(fmt.Sprintf("error occurred calling plugin hook %s", hook.Description))
+							panic(err)
+						}
+					}
+				}
 			}
 			if subStep == subSteps-1 {
 				// do atomic stuff at end of step

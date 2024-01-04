@@ -40,7 +40,7 @@ to quickly create a Cobra application.`,
 				name, major, minor, patch, description, filename, len(hooks),
 			))
 			for _, hook := range hooks {
-				log.Info(fmt.Sprintf("plugin: %s - hook '%s' at step %d substep %d (%0x, %0x)", name, hook.Description, hook.Step, hook.SubStep, hook.Core, hook.Thread))
+				log.Info(fmt.Sprintf("plugin: %s - hook '%s' at substep %d (%0x, %0x)", name, hook.Description, hook.SubStep, hook.Core, hook.Thread))
 			}
 		}
 	},

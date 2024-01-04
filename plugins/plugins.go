@@ -17,7 +17,6 @@ import (
 )
 
 type Hook struct {
-	Step        int
 	SubStep     int
 	Core        func(context.Context) error
 	Thread      func(context.Context, int, string) error
