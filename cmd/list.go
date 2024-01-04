@@ -53,20 +53,12 @@ to quickly create a Cobra application.`,
 		// incuding Init, Name, Version, Description
 		for _, pluginFilename := range pluginFiles {
 			logger.Log.With("cmd", "plugin").Info(fmt.Sprintf("loading plugin from file %s", pluginFilename))
-			plg, err := plugins.LoadPlugIn(pluginFilename)
+			ctx := context.WithValue(cmd.Context(), "log", logger.Log.With("plugin", pluginFilename))
+			plg, err := plugins.LoadPlugIn(ctx, pluginFilename)
 			if err != nil {
 				panic(err)
 			}
-			ctx := context.WithValue(cmd.Context(), "log", logger.Log.With("plugin", pluginFilename))
-			(*plg).Init(ctx)
-			name := (*plg).Name()
-			description := (*plg).Description()
-			callbacks := (*plg).GetHooks()
-			logger.Log.With("cmd", "plugin").With("description", description).
-				Info(fmt.Sprintf("plugin %s had %d call backs", name, len(callbacks)))
-			for _, callback := range callbacks {
-				logger.Log.With("cmd", "plugin").Info(fmt.Sprintf("callback '%s' at step %d substep %d (%0x, %0x)", callback.Description, callback.Step, callback.SubStep, callback.Core, callback.Thread))
-			}
+			logger.Log.With("cmd", "plugin").Debug(fmt.Sprintf("loaded plugin %s from file %s", (*plg).Name(), pluginFilename))
 		}
 	},
 }

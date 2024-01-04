@@ -4,7 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"plugin"
+
+	"github.com/dacb/goabe/logger"
+	//"github.com/dacb/goabe/logger"
 )
 
 type Hook struct {
@@ -23,8 +27,8 @@ type PlugIn interface {
 	GetHooks() []Hook
 }
 
-func LoadPlugIn(filename string) (*PlugIn, error) {
-	plg, err := plugin.Open(filename)
+func OpenPlugIn(_ context.Context, pluginFilename string) (*PlugIn, error) {
+	plg, err := plugin.Open(pluginFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +39,35 @@ func LoadPlugIn(filename string) (*PlugIn, error) {
 	}
 
 	return pluginStruct, nil
+}
+
+func LoadPlugIn(ctx context.Context, pluginFilename string) (*PlugIn, error) {
+	log := ctx.Value("log").(*slog.Logger)
+	ctx = context.WithValue(ctx, "log", logger.Log.With("plugin", pluginFilename))
+
+	plugin, err := OpenPlugIn(ctx, pluginFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	// call the init function for the plug in
+	err = (*plugin).Init(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// call the data functions to print some information and verify
+	name := (*plugin).Name()
+	description := (*plugin).Description()
+	callbacks := (*plugin).GetHooks()
+
+	log.With("cmd", "plugin").With("description", description).
+		Info(fmt.Sprintf("plugin %s had %d call backs", name, len(callbacks)))
+	for _, callback := range callbacks {
+		log.With("cmd", "plugin").Info(fmt.Sprintf("callback '%s' at step %d substep %d (%0x, %0x)", callback.Description, callback.Step, callback.SubStep, callback.Core, callback.Thread))
+	}
+
+	return plugin, nil
 }
 
 // this is based on the example in the go docs
