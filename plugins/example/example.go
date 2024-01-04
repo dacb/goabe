@@ -48,8 +48,8 @@ func (p *plugin) GetHooks() []plugins.Hook {
 	log.Info("example plugin GetHooks function was called")
 
 	var hooks []plugins.Hook
-	hooks = append(hooks, plugins.Hook{0, 0, CoreSubStep0, nil})
-	hooks = append(hooks, plugins.Hook{0, 1, nil, ThreadSubStep1})
+	hooks = append(hooks, plugins.Hook{0, 0, nil, ThreadSubStep1, "thread sum"})
+	hooks = append(hooks, plugins.Hook{0, 1, CoreSubStep0, nil, "core sum"})
 
 	return hooks
 }

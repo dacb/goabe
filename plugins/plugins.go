@@ -8,10 +8,11 @@ import (
 )
 
 type Hook struct {
-	Step    int
-	SubStep int
-	Core    func() error
-	Thread  func(id int, name string) error
+	Step        int
+	SubStep     int
+	Core        func() error
+	Thread      func(id int, name string) error
+	Description string
 }
 
 type PlugIn interface {

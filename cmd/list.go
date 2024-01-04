@@ -29,6 +29,7 @@ to quickly create a Cobra application.`,
 		var pluginFiles []string
 		// find the plugin directory list from the config
 		// these should be separated by ':'
+		// iterate over the directories finding each .so file
 		pluginDirsList := viper.GetString("plugin_dirs")
 		pluginDirs := strings.Split(pluginDirsList, ":")
 		for _, pluginDir := range pluginDirs {
@@ -48,7 +49,6 @@ to quickly create a Cobra application.`,
 			logger.Log.With("cmd", "plugin").Info(fmt.Sprintf("plugin directory %s contained %d plugins", pluginDir, len(pluginFiles)))
 		}
 
-		// iterate over the directories finding each .so file
 		// open each file and try to call the basic functions
 		// incuding Init, Name, Version, Description
 		for _, pluginFilename := range pluginFiles {
@@ -57,14 +57,16 @@ to quickly create a Cobra application.`,
 			if err != nil {
 				panic(err)
 			}
-			ctx := context.Background()
-			ctx = context.WithValue(ctx, "log", logger.Log.With("plugin", pluginFilename))
+			ctx := context.WithValue(cmd.Context(), "log", logger.Log.With("plugin", pluginFilename))
 			(*plg).Init(ctx)
 			name := (*plg).Name()
 			description := (*plg).Description()
 			callbacks := (*plg).GetHooks()
 			logger.Log.With("cmd", "plugin").With("description", description).
 				Info(fmt.Sprintf("plugin %s had %d call backs", name, len(callbacks)))
+			for _, callback := range callbacks {
+				logger.Log.With("cmd", "plugin").Info(fmt.Sprintf("callback '%s' at step %d substep %d (%0x, %0x)", callback.Description, callback.Step, callback.SubStep, callback.Core, callback.Thread))
+			}
 		}
 	},
 }
