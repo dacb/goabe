@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -25,14 +26,15 @@ This is the core of the Go Agent Based Engine toolkit.
 This application runs agent based models and analyzes
 them`,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Log.With(
+		log := logger.Log.With(
 			slog.Group("cmd",
 				slog.String("cmd", "run"),
 				slog.Int64("runSteps", runSteps),
 			),
-		).Info("run was called")
-
-		runCore(Threads)
+		)
+		log.Info("run command called")
+		ctx := context.WithValue(cmd.Context(), "log", log)
+		runCore(ctx, Threads)
 
 	},
 }
@@ -60,7 +62,8 @@ const (
 	CONTINUE
 )
 
-func runCore(threads int) {
+func runCore(ctx context.Context, threads int) {
+	log := ctx.Value("log").(*slog.Logger)
 	subSteps := viper.GetInt("substeps")
 	// this waitgroup is used to signal the close of the threads
 	wgThreadsDone := new(sync.WaitGroup)
@@ -71,7 +74,9 @@ func runCore(threads int) {
 	// spawn the threads
 	for threadI := 0; threadI < threads; threadI++ {
 		syncChan[threadI] = make(chan engineMsg)
-		go runThread(wgThreadsDone, syncChan[threadI], fmt.Sprintf("thread_%d", threadI), threadI)
+		threadName := fmt.Sprintf("thread_%d", threadI)
+		tctx := context.WithValue(ctx, "log", log.With("actor", threadName))
+		go runThread(tctx, wgThreadsDone, syncChan[threadI], threadName, threadI)
 	}
 	// release the threads
 	stepStartTime := time.Now()
@@ -116,9 +121,10 @@ func runCore(threads int) {
 	logger.Log.With("cmd", "run").With("actor", "core").Debug("done")
 }
 
-func runThread(wgDone *sync.WaitGroup, syncChan chan engineMsg, name string, id int) {
+func runThread(ctx context.Context, wgDone *sync.WaitGroup, syncChan chan engineMsg, name string, id int) {
 	defer wgDone.Done()
-	logger.Log.With("cmd", "run").With("actor", name).Debug("started")
+	log := ctx.Value("log").(*slog.Logger)
+	log.Debug("started")
 
 	// configure the thread
 	subSteps := viper.GetInt("substeps")
