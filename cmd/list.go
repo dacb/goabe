@@ -3,15 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/fs"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/dacb/goabe/logger"
 	"github.com/dacb/goabe/plugins"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // listCmd represents the list command
@@ -25,40 +20,28 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Log.With("cmd", "plugin").Info("plugin list called")
-		var pluginFiles []string
-		// find the plugin directory list from the config
-		// these should be separated by ':'
-		// iterate over the directories finding each .so file
-		pluginDirsList := viper.GetString("plugin_dirs")
-		pluginDirs := strings.Split(pluginDirsList, ":")
-		for _, pluginDir := range pluginDirs {
-			if stat, err := os.Stat(pluginDir); err != nil || !stat.IsDir() {
-				logger.Log.Error(fmt.Sprintf("unable to open the plugin directory '%s'", pluginDir))
-				panic(err)
-			}
-			filepath.WalkDir(pluginDir, func(str string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-				if filepath.Ext(d.Name()) == ".so" {
-					pluginFiles = append(pluginFiles, str)
-				}
-				return nil
-			})
-			logger.Log.With("cmd", "plugin").Info(fmt.Sprintf("plugin directory %s contained %d plugins", pluginDir, len(pluginFiles)))
+		log := logger.Log.With("cmd", "plugin list")
+		log.Info("plugin list called")
+		ctx := context.WithValue(cmd.Context(), "log", log)
+
+		err := plugins.LoadPlugins(ctx)
+		if err != nil {
+			log.Error("an error occurred loading the plugins")
+			panic(err)
 		}
 
-		// open each file and try to call the basic functions
-		// incuding Init, Name, Version, Description
-		for _, pluginFilename := range pluginFiles {
-			logger.Log.With("cmd", "plugin").Info(fmt.Sprintf("loading plugin from file %s", pluginFilename))
-			ctx := context.WithValue(cmd.Context(), "log", logger.Log.With("plugin", pluginFilename))
-			plg, err := plugins.LoadPlugIn(ctx, pluginFilename)
-			if err != nil {
-				panic(err)
+		for _, plugin := range plugins.LoadedPlugins {
+			name := (*plugin).Name()
+			description := (*plugin).Description()
+			hooks := (*plugin).GetHooks()
+			major, minor, patch := (*plugin).Version()
+			filename := (*plugin).Filename()
+			log.Info(fmt.Sprintf("plugin: %s v%d.%d.%d - %s - %s - %d hooks",
+				name, major, minor, patch, description, filename, len(hooks),
+			))
+			for _, hook := range hooks {
+				log.Info(fmt.Sprintf("plugin: %s - hook '%s' at step %d substep %d (%0x, %0x)", name, hook.Description, hook.Step, hook.SubStep, hook.Core, hook.Thread))
 			}
-			logger.Log.With("cmd", "plugin").Debug(fmt.Sprintf("loaded plugin %s from file %s", (*plg).Name(), pluginFilename))
 		}
 	},
 }

@@ -2,50 +2,59 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log/slog"
 
 	"github.com/dacb/goabe/plugins"
 )
 
+var pluginFilename string // when this is populated, the plugin has alread been initialized
 var log *slog.Logger
 
 // the empty struct used for the plugin
 type plugin struct {
 }
 
-// returns the version of plugin in major, minor, and patch
-func (p *plugin) Init(ctx context.Context) error {
+var PlugIn plugin
+
+// main initiailization function for the plugin
+func (p *plugin) Init(ctx context.Context, pluginFname string) error {
 	mylog, ok := ctx.Value("log").(*slog.Logger)
 	if !ok {
-		panic(fmt.Errorf("unable to find the logger value in the current context"))
+		return errors.New("no logger found on the current context")
 	}
 	log = mylog
-	log.Info("example plugin Init function was called")
+	log.Debug("example plugin Init function was called")
+
+	if pluginFilename != "" {
+		log.Error("plugin has already been initialized? refusing to load the plugin twice")
+		return errors.New("this plug in has already been loaded!")
+	}
+	pluginFilename = pluginFname
 
 	return nil
 }
 
 // levels as separate integers
 func (p *plugin) Version() (int, int, int) {
-	log.Info("example plugin Version function was called")
+	log.Debug("example plugin Version function was called")
 	return 0, 1, 0
 }
 
 // returns the short name of the module as a string
 func (p *plugin) Name() string {
-	log.Info("example plugin Name function was called")
+	log.Debug("example plugin Name function was called")
 	return "example"
 }
 
 // returns a short description of the module as a string
 func (p *plugin) Description() string {
-	log.Info("example plugin Description function was called")
+	log.Debug("example plugin Description function was called")
 	return "example plugin for code template"
 }
 
 func (p *plugin) GetHooks() []plugins.Hook {
-	log.Info("example plugin GetHooks function was called")
+	log.Debug("example plugin GetHooks function was called")
 
 	var hooks []plugins.Hook
 	hooks = append(hooks, plugins.Hook{0, 0, nil, ThreadSubStep1, "thread sum"})
@@ -54,14 +63,22 @@ func (p *plugin) GetHooks() []plugins.Hook {
 	return hooks
 }
 
-func CoreSubStep0() error {
-	log.With("actor", "core").Info("core substep 0 hook called")
+func (p *plugin) Filename() string {
+	log.Debug("example plugin Filename function was called")
+
+	return pluginFilename
+}
+
+// note this logs through the context
+func CoreSubStep0(ctx context.Context) error {
+	log := ctx.Value("log").(*slog.Logger)
+	log.With("actor", "core").Debug("core substep 0 hook called")
 	return nil
 }
 
-func ThreadSubStep1(id int, name string) error {
-	log.With("actor", name).Info("core substep 0 hook called")
+// note this logs through the context
+func ThreadSubStep1(ctx context.Context, id int, name string) error {
+	log := ctx.Value("log").(*slog.Logger)
+	log.With("actor", name).Debug("core substep 0 hook called")
 	return nil
 }
-
-var PlugIn plugin

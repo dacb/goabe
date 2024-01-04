@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dacb/goabe/logger"
+	"github.com/dacb/goabe/plugins"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,8 +35,14 @@ them`,
 		)
 		log.Info("run command called")
 		ctx := context.WithValue(cmd.Context(), "log", log)
-		runCore(ctx, Threads)
 
+		err := plugins.LoadPlugins(ctx)
+		if err != nil {
+			log.Error("an error occurred loading the plugins")
+			panic(err)
+		}
+
+		runCore(ctx, Threads)
 	},
 }
 
@@ -62,7 +69,21 @@ const (
 	CONTINUE
 )
 
+type SubStepHook struct {
+	Step    int
+	SubStep int
+}
+
+//var pluginHooks map[[2]int]*SubStepHook{}
+
+//func setupPluginHooks(ctx context.Context) {
+//	for _, plugin := range plugins.LoadedPlugins {
+//		hooks := (*plugin).
+//	}
+//}
+
 func runCore(ctx context.Context, threads int) {
+	// this is the logger from the command context
 	log := ctx.Value("log").(*slog.Logger)
 	subSteps := viper.GetInt("substeps")
 	// this waitgroup is used to signal the close of the threads
@@ -84,6 +105,7 @@ func runCore(ctx context.Context, threads int) {
 		syncChan[threadI] <- CONTINUE
 	}
 
+	// setup the log for the rest of the core's activities
 	log = log.With("actor", "core")
 	ctx = context.WithValue(ctx, "log", log)
 
@@ -102,8 +124,10 @@ func runCore(ctx context.Context, threads int) {
 					panic("unimplemented graceful termination")
 				}
 			}
+
 			// do atomic stuff at end of substep
 			{
+				//plugin
 			}
 			if subStep == subSteps-1 {
 				// do atomic stuff at end of step
