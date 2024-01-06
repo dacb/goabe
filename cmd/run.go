@@ -102,7 +102,8 @@ func runCore(ctx context.Context, threads int) {
 		go runThread(tctx, wgThreadsDone, syncChan[threadI], threadName, threadI)
 	}
 	// release the threads
-	stepStartTime := time.Now()
+	runStartTime := time.Now()
+	stepStartTime := runStartTime
 	for threadI := 0; threadI < threads; threadI++ {
 		syncChan[threadI] <- CONTINUE
 	}
@@ -155,10 +156,13 @@ func runCore(ctx context.Context, threads int) {
 			}
 		}
 	}
+	// report time
+	runTime := time.Now().Sub(runStartTime)
+	log.With("run_time", runTime).Info("finished")
 	// wait until the threads are done
-	logger.Log.With("cmd", "run").With("actor", "core").Debug("waiting for threads")
+	log.Debug("waiting for threads")
 	wgThreadsDone.Wait()
-	logger.Log.With("cmd", "run").With("actor", "core").Debug("done")
+	log.Debug("done")
 }
 
 func runThread(ctx context.Context, wgDone *sync.WaitGroup, syncChan chan engineMsg, name string, id int) {
