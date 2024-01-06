@@ -24,6 +24,7 @@ type matrix struct {
 }
 
 var life matrix
+var threads int
 
 func Register() {
 	plugins.LoadedPlugins = append(plugins.LoadedPlugins, plugins.Plugin{Init, Name, Version, Description, GetHooks})
@@ -35,7 +36,14 @@ func Init(ctx context.Context) error {
 	if !ok {
 		return errors.New("no logger found on the current context")
 	}
-	log.Info("Life plugin Init function was called")
+
+	threadCount, ok := ctx.Value("threads").(int)
+	if !ok {
+		return errors.New("missing number of threads in current context")
+	}
+	threads = threadCount
+
+	log.Info(fmt.Sprintf("Life plugin Init function was called for %d threds", threads))
 
 	// initialize the data structures for the module
 	life.x = 42
@@ -149,8 +157,6 @@ func CoreSubStep1(ctx context.Context) error {
 // note this logs through the context
 func ThreadSubStep0(ctx context.Context, id int, name string) error {
 	//log := ctx.Value("log").(*slog.Logger).With("plugin", Name())
-
-	threads := 2 // this is hardcoded and the reason for the next big change
 
 	// determine the chunksize
 	chunkSize := (life.x * life.y) / threads

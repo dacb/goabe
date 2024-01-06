@@ -10,6 +10,8 @@ import (
 
 var log *slog.Logger
 
+var threads int
+
 func Register() {
 	plugins.LoadedPlugins = append(plugins.LoadedPlugins, plugins.Plugin{Init, Name, Version, Description, GetHooks})
 }
@@ -22,6 +24,12 @@ func Init(ctx context.Context) error {
 	}
 	log = mylog.With("plugin", Name())
 	log.Info("example plugin Init function was called")
+
+	threadCount, ok := ctx.Value("threads").(int)
+	if !ok {
+		return errors.New("missing number of threads in current context")
+	}
+	threads = threadCount
 
 	return nil
 }

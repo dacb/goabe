@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -28,6 +29,9 @@ and analysis of agent based computations.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		cmd.SetContext(context.WithValue(cmd.Context(), "threads", Threads))
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
