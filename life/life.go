@@ -43,7 +43,7 @@ func Init(ctx context.Context) error {
 	}
 	threads = threadCount
 
-	log.Info(fmt.Sprintf("Life plugin Init function was called for %d threds", threads))
+	log.Info(fmt.Sprintf("Life plugin Init function was called for %d threads", threads))
 
 	// initialize the data structures for the module
 	life.x = 42
@@ -68,7 +68,6 @@ func Init(ctx context.Context) error {
 	// now setup the neighbors
 	idx = 0
 	for xi := 0; xi < life.x; xi++ {
-		life.mat[xi] = make([]*cell, life.y)
 		for yi := 0; yi < life.y; yi++ {
 			// loop over the matrix neighbors and setup the neighbor list
 			// do this using periodic boundaries; doing this once here
@@ -84,16 +83,16 @@ func Init(ctx context.Context) error {
 						continue
 					}
 					// calculate neihbor index w/ periodic boundaries
-					nxiPB := nxi
-					if nxi < 0 {
+					nxiPB := nxi + xi
+					if nxiPB < 0 {
 						nxiPB = life.x - 1
-					} else if nxi >= life.x {
+					} else if nxiPB >= life.x {
 						nxiPB = 0
 					}
-					nyiPB := nyi
-					if nyi < 0 {
+					nyiPB := nyi + yi
+					if nyiPB < 0 {
 						nyiPB = life.y - 1
-					} else if nyi >= life.y {
+					} else if nyiPB >= life.y {
 						nyiPB = 0
 					}
 					// set the neighbor in update the index
@@ -101,6 +100,7 @@ func Init(ctx context.Context) error {
 					nidx += 1
 				}
 			}
+			idx += 1
 		}
 	}
 
@@ -164,8 +164,23 @@ func ThreadSubStep0(ctx context.Context, id int, name string) error {
 		chunkSize += 1
 	}
 	// iterative over this thread's chunk
-	for idx := chunkSize * id; idx <= chunkSize*(id+1) && idx <= life.x*life.y; idx++ {
-
+	for idx := chunkSize * id; idx <= chunkSize*(id+1) && idx < life.x*life.y; idx++ {
+		alive := 0
+		for nidx := 0; nidx < 8; nidx++ {
+			if life.cells[idx].neighbors[nidx].occupied {
+				alive += 1
+			}
+		}
+		life.cells[idx].occupied_next = false
+		if life.cells[idx].occupied {
+			if alive == 2 || alive == 3 {
+				life.cells[idx].occupied_next = true
+			}
+		} else {
+			if alive == 3 {
+				life.cells[idx].occupied_next = true
+			}
+		}
 	}
 
 	return nil
