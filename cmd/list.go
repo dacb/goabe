@@ -31,13 +31,12 @@ to quickly create a Cobra application.`,
 		}
 
 		for _, plugin := range plugins.LoadedPlugins {
-			name := (*plugin).Name()
-			description := (*plugin).Description()
-			hooks := (*plugin).GetHooks()
-			major, minor, patch := (*plugin).Version()
-			filename := (*plugin).Filename()
-			log.Info(fmt.Sprintf("plugin: %s v%d.%d.%d - %s - %s - %d hooks",
-				name, major, minor, patch, description, filename, len(hooks),
+			name := plugin.Name()
+			description := plugin.Description()
+			hooks := plugin.GetHooks()
+			major, minor, patch := plugin.Version()
+			log.Info(fmt.Sprintf("plugin: %s v%d.%d.%d - %s - %d hooks",
+				name, major, minor, patch, description, len(hooks),
 			))
 			for _, hook := range hooks {
 				log.Info(fmt.Sprintf("plugin: %s - hook '%s' at substep %d (%0x, %0x)", name, hook.Description, hook.SubStep, hook.Core, hook.Thread))

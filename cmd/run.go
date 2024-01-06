@@ -75,7 +75,7 @@ var pluginHooks map[int][]plugins.Hook
 func setupPluginHooks(ctx context.Context) {
 	pluginHooks = make(map[int][]plugins.Hook)
 	for _, plugin := range plugins.LoadedPlugins {
-		hooks := (*plugin).GetHooks()
+		hooks := plugin.GetHooks()
 		for _, hook := range hooks {
 			subStep := hook.SubStep
 			pluginHooks[subStep] = append(pluginHooks[subStep], hook)
