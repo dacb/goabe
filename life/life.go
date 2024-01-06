@@ -5,15 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math/rand"
 
 	"github.com/dacb/goabe/plugins"
 )
 
 type cell struct {
-	occupied      bool
-	occupied_next bool
-	neighbors     []*cell
+	alive     bool
+	aliveNext bool
+	neighbors []*cell
 }
 
 type matrix struct {
@@ -105,14 +104,22 @@ func Init(ctx context.Context) error {
 	}
 
 	// initialize the matrix states
-	occupiedCells := 0
-	for _, cell := range life.cells {
-		cell.occupied = rand.Uint32()&(1<<31) == 0 // random true false from integer
-		if cell.occupied {
-			occupiedCells += 1
+	aliveCells := 0
+	for idx, _ := range life.cells {
+		cell := life.cells[idx]
+		cell.alive = 1
+		//rand.Uint32()&(1<<31) == 0 // random true false from integer
+		if cell.alive {
+			aliveCells += 1
 		}
 	}
-	log.Info(fmt.Sprintf("there are %d alive cells at the start", occupiedCells))
+	log.Info(fmt.Sprintf("there are %d alive cells at the start", aliveCells))
+	for idx, _ := range life.cells {
+		cell := life.cells[idx]
+		if cell.alive {
+			aliveCells += 1
+		}
+	}
 
 	return nil
 }
@@ -143,14 +150,15 @@ func GetHooks() []plugins.Hook {
 // note this logs through the context
 func CoreSubStep1(ctx context.Context) error {
 	log := ctx.Value("log").(*slog.Logger).With("plugin", Name())
-	occupiedCells := 0
-	for _, cell := range life.cells {
-		cell.occupied = cell.occupied_next
-		if cell.occupied {
-			occupiedCells += 1
+	aliveCells := 0
+	for idx, _ := range life.cells {
+		cell := life.cells[idx]
+		cell.alive = cell.aliveNext
+		if cell.alive {
+			aliveCells += 1
 		}
 	}
-	log.Info(fmt.Sprintf("%d alive cells", occupiedCells))
+	log.Info(fmt.Sprintf("%d alive cells", aliveCells))
 	return nil
 }
 
@@ -164,24 +172,32 @@ func ThreadSubStep0(ctx context.Context, id int, name string) error {
 		chunkSize += 1
 	}
 	// iterative over this thread's chunk
+	foundAlive := 0
+	aliveNext := 0
+	foundCells := 0
 	for idx := chunkSize * id; idx <= chunkSize*(id+1) && idx < life.x*life.y; idx++ {
 		alive := 0
 		for nidx := 0; nidx < 8; nidx++ {
-			if life.cells[idx].neighbors[nidx].occupied {
+			if life.cells[idx].neighbors[nidx].alive {
 				alive += 1
 			}
 		}
-		life.cells[idx].occupied_next = false
-		if life.cells[idx].occupied {
+		life.cells[idx].aliveNext = false
+		if life.cells[idx].alive {
+			foundAlive += 1
 			if alive == 2 || alive == 3 {
-				life.cells[idx].occupied_next = true
+				life.cells[idx].aliveNext = true
+				aliveNext += 1
 			}
 		} else {
 			if alive == 3 {
-				life.cells[idx].occupied_next = true
+				life.cells[idx].aliveNext = true
+				aliveNext += 1
 			}
 		}
+		foundCells += 1
 	}
+	fmt.Printf("%s found %d total cells with %d alive cells with %d alive next\n", name, foundCells, foundAlive, aliveNext)
 
 	return nil
 }
