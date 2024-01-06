@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math/rand"
 
 	"github.com/dacb/goabe/plugins"
 )
@@ -45,8 +46,8 @@ func Init(ctx context.Context) error {
 	log.Info(fmt.Sprintf("Life plugin Init function was called for %d threads", threads))
 
 	// initialize the data structures for the module
-	life.x = 42
-	life.y = 32
+	life.x = 8
+	life.y = 16
 
 	if life.x < 3 || life.y < 3 {
 		log.Error("minimum size of matrix must be 3 x 3")
@@ -105,21 +106,13 @@ func Init(ctx context.Context) error {
 
 	// initialize the matrix states
 	aliveCells := 0
-	for idx, _ := range life.cells {
-		cell := life.cells[idx]
-		cell.alive = 1
-		//rand.Uint32()&(1<<31) == 0 // random true false from integer
-		if cell.alive {
+	for idx := 0; idx < life.x*life.y; idx++ {
+		life.cells[idx].alive = rand.Uint32()&(1<<31) == 0 // random true false from integer
+		if life.cells[idx].alive {
 			aliveCells += 1
 		}
 	}
 	log.Info(fmt.Sprintf("there are %d alive cells at the start", aliveCells))
-	for idx, _ := range life.cells {
-		cell := life.cells[idx]
-		if cell.alive {
-			aliveCells += 1
-		}
-	}
 
 	return nil
 }
@@ -147,18 +140,34 @@ func GetHooks() []plugins.Hook {
 	return hooks
 }
 
+func printMatrix(ctx context.Context) error {
+	//time.Sleep(1 * time.Second)
+	fmt.Print("\033[H\033[2J")
+	for xi := 0; xi < life.x; xi++ {
+		for yi := 0; yi < life.y; yi++ {
+			c := '.'
+			if life.mat[xi][yi].alive {
+				c = 'X'
+			}
+			fmt.Printf(" %c", c)
+		}
+		fmt.Printf("\n")
+	}
+	return nil
+}
+
 // note this logs through the context
 func CoreSubStep1(ctx context.Context) error {
 	log := ctx.Value("log").(*slog.Logger).With("plugin", Name())
 	aliveCells := 0
-	for idx, _ := range life.cells {
-		cell := life.cells[idx]
-		cell.alive = cell.aliveNext
-		if cell.alive {
+	for idx := 0; idx < life.x*life.y; idx++ {
+		life.cells[idx].alive = life.cells[idx].aliveNext
+		if life.cells[idx].alive {
 			aliveCells += 1
 		}
 	}
 	log.Info(fmt.Sprintf("%d alive cells", aliveCells))
+	printMatrix(ctx)
 	return nil
 }
 
@@ -172,9 +181,6 @@ func ThreadSubStep0(ctx context.Context, id int, name string) error {
 		chunkSize += 1
 	}
 	// iterative over this thread's chunk
-	foundAlive := 0
-	aliveNext := 0
-	foundCells := 0
 	for idx := chunkSize * id; idx <= chunkSize*(id+1) && idx < life.x*life.y; idx++ {
 		alive := 0
 		for nidx := 0; nidx < 8; nidx++ {
@@ -184,20 +190,15 @@ func ThreadSubStep0(ctx context.Context, id int, name string) error {
 		}
 		life.cells[idx].aliveNext = false
 		if life.cells[idx].alive {
-			foundAlive += 1
 			if alive == 2 || alive == 3 {
 				life.cells[idx].aliveNext = true
-				aliveNext += 1
 			}
 		} else {
 			if alive == 3 {
 				life.cells[idx].aliveNext = true
-				aliveNext += 1
 			}
 		}
-		foundCells += 1
 	}
-	fmt.Printf("%s found %d total cells with %d alive cells with %d alive next\n", name, foundCells, foundAlive, aliveNext)
 
 	return nil
 }
