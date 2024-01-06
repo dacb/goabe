@@ -175,14 +175,23 @@ func runThread(ctx context.Context, wgDone *sync.WaitGroup, syncChan chan engine
 		//logger.Log.With("cmd", "run").With("actor", name).
 		//	With("step", step).Debug("starting")
 		for subStep := 0; subStep < subSteps && state != HALT; subStep++ {
-			workTimeMS := 10 // + rand.Intn(10)
 			//logger.Log.With("cmd", "run").With("actor", name).
 			//	With("step", step).With("substep", subStep).
 			//	With("workTimeMS", workTimeMS).Debug("working")
-			time.Sleep((time.Duration)(workTimeMS) * time.Millisecond)
-			//logger.Log.With("cmd", "run").With("actor", name).
-			//	With("step", step).With("substep", subStep).
-			//	Debug("letting core know we are done")
+			{
+				hooks := pluginHooks[subStep]
+				for _, hook := range hooks {
+					if hook.Thread != nil {
+						// make the thread call for this substep
+						err := hook.Thread(ctx, id, name)
+						if err != nil {
+							// can this be made to report the plug in as well?
+							log.Error(fmt.Sprintf("error occurred calling plugin hook %s", hook.Description))
+							panic(err)
+						}
+					}
+				}
+			}
 			// send back our message that we are ready to continue
 			syncChan <- CONTINUE
 			//logger.Log.With("cmd", "run").With("actor", name).

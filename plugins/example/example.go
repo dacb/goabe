@@ -71,14 +71,14 @@ func (p *plugin) Filename() string {
 
 // note this logs through the context
 func CoreSubStep1(ctx context.Context) error {
-	log := ctx.Value("log").(*slog.Logger)
-	log.With("actor", "core").Info("core substep 0 hook called")
+	log := ctx.Value("log").(*slog.Logger).With("plugin", pluginFilename)
+	log.Info("core substep 1 hook called")
 	return nil
 }
 
 // note this logs through the context
 func ThreadSubStep0(ctx context.Context, id int, name string) error {
-	log := ctx.Value("log").(*slog.Logger)
-	log.With("actor", name).Info("thread substep 0 hook called")
+	log := ctx.Value("log").(*slog.Logger).With("actor", name).With("plugin", pluginFilename)
+	log.Info("thread substep 0 hook called")
 	return nil
 }
