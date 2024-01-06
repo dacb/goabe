@@ -1,4 +1,4 @@
-plugins: plugins/example/example.so
+plugins: plugins/example/example.so plugins/example/life.so
 
 all: $(plugins)
 
