@@ -24,7 +24,7 @@ func (p *plugin) Init(ctx context.Context, pluginFname string) error {
 		return errors.New("no logger found on the current context")
 	}
 	log = mylog
-	log.Debug("example plugin Init function was called")
+	log.Info("example plugin Init function was called")
 
 	if pluginFilename != "" {
 		log.Error("plugin has already been initialized? refusing to load the plugin twice")
@@ -35,10 +35,10 @@ func (p *plugin) Init(ctx context.Context, pluginFname string) error {
 	return nil
 }
 
-// levels as separate integers
+// major, minor, patch
 func (p *plugin) Version() (int, int, int) {
 	log.Debug("example plugin Version function was called")
-	return 0, 1, 0
+	return 1, 0, 0
 }
 
 // returns the short name of the module as a string
