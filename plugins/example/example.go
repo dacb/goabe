@@ -65,7 +65,6 @@ func (p *plugin) GetHooks() []plugins.Hook {
 
 func (p *plugin) Filename() string {
 	log.Debug("example plugin Filename function was called")
-
 	return pluginFilename
 }
 
