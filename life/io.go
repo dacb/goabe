@@ -36,10 +36,9 @@ func (life *matrix) saveMatrix(ctx context.Context, filename string) error {
 		return err
 	}
 
-	w := bufio.NewWriter(file)
-	w.WriteString("#Life 1.05\n")
 	major, minor, build := Version()
-	w.WriteString(fmt.Sprintf("#D goabe life plugin v%d.%d.%d\n", major, minor, build))
+	file.WriteString(fmt.Sprintf("#C goabe life plugin v%d.%d.%d\n", major, minor, build))
+	file.WriteString(fmt.Sprintf("x = %d, y = %d, rule = B3/S23\n", life.x, life.y))
 
 	return nil
 }
