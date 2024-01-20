@@ -158,11 +158,18 @@ func GetHooks() []plugins.Hook {
 
 // do before each set of steps
 func PreRun(ctx context.Context) error {
+	//log := ctx.Value("log").(*slog.Logger).With("plugin", Name())
+
 	return nil
 }
 
 // do after each set of steps
 func PostRun(ctx context.Context) error {
+	//log := ctx.Value("log").(*slog.Logger).With("plugin", Name())
+
+	filename := viper.GetString("life.out_filename")
+	life.saveMatrix(ctx, filename)
+
 	return nil
 }
 
