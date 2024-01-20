@@ -1,9 +1,12 @@
-cmd/registerPlugins.go:
-	./cmd/build_registerPlugins.bash > cmd/registerPlugins.go
+all: goabe
 
 clean:
-	rm cmd/registerPlugins.go
+	rm goabe
+	cd cmd; make clean
 
 goabe:
-	go generate .
+	go generate ./cmd
 	go build .
+
+test: goabe
+	./goabe --threads 10 run --steps 100

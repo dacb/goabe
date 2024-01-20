@@ -41,6 +41,7 @@ func Execute() {
 	}
 }
 
+//go:generate make registerPlugins.go
 func init() {
 	cobra.OnInitialize(initConfig)
 
@@ -55,7 +56,6 @@ func init() {
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	// register the plugins
-	//go:generate make plugins
 	registerPlugins()
 }
 
