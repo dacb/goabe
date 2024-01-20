@@ -37,7 +37,7 @@ func LoadPlugins(ctx context.Context) error {
 		err := plugin.Init(ctx)
 		if err != nil {
 			log.Error("plugin initialization failed")
-			panic(err)
+			return err
 		}
 		// call the data functions to print some information and verify
 		name := plugin.Name()
