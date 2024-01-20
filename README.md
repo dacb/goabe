@@ -2,15 +2,15 @@
 go agent based engine
 
 ## Getting started
-Install go version 1.21 or later. Make sure the cobra generator is installed, e.g.
-```
-go install github.com/spf13/cobra-cli@latest
-```
+Install go version 1.21 or later.
+
 ### Building
 To build the `goabe` binary, including running `go generate`, just use `make`!
 ```
 make
 ```
+
+### Configuration
 To generate your starting config file, do something like:
 ```
 ./goabe --threads 2 config create
