@@ -23,7 +23,7 @@ make build-plugins
 This will build the `.so` files in the `plugins` directory.  This directory needs to be searchable
 and readable by goabe.
 
-###
+### LIF files (no longer supported)
 To download the LIF files, I used:
 ```
 wget http://www.ibiblio.org/lifepatterns/lifep.zip
@@ -31,3 +31,6 @@ mkdir lifep
 cd life
 unzip ../lifep.zip 
 ```
+
+### RLE data
+Catalog is here: https://catagolue.hatsya.com/home
