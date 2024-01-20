@@ -98,7 +98,6 @@ type parserState int
 const (
 	start parserState = iota
 	formatKnown
-	cellBlock
 )
 
 func (life *matrix) loadMatrix(ctx context.Context, filename string) error {
@@ -115,81 +114,45 @@ func (life *matrix) loadMatrix(ctx context.Context, filename string) error {
 
 	state := start
 	line := 1
-	var cellBlockX, cellBlockY int
+	var x, y, B, S int // x, y dimensions of pattern, B and S are rule values
 	for scanner.Scan() {
 		log := log.With("matrix_file", filename)
 		text := scanner.Text()
 		words := strings.Fields(text)
 		switch state {
 		case start:
-			if text != "#Life 1.05" || len(words) < 1 {
-				log.Error(fmt.Sprintf("line %d: expecting to find a file format line, i.e., #Life 1.05", line))
-			}
-			state = formatKnown
-		case formatKnown:
 			if len(words) < 1 {
-				log.Error(fmt.Sprintf("file '%s', line %d: line too short", filename, line))
-			}
-			switch words[0] {
-			case "#D":
-				//fmt.Println("description line")
-			case "#P":
-				//fmt.Println("switch to cell block")
-				if len(words) != 3 {
-					log.Error(fmt.Sprintf("file '%s', line %d: unable to parse cell block: %s", filename, line, text))
+				log.Warn(fmt.Sprintf("line %d: expecting to find a non-empty line", line))
+			} else if words[0] == "#C" {
+				log.Info(text)
+			} else {
+				parsed, err := fmt.Sscanf(text, "x = %d, y = %d, rule = B%d/S%d", &x, &y, &B, &S)
+				if parsed == 2 || parsed == 4 {
+					state = formatKnown
 				}
-				parsed, err := fmt.Sscanf(text, "#P %d %d", &cellBlockX, &cellBlockY)
-				if parsed != 2 || err != nil {
-					log.Error(fmt.Sprint("file '%s', line %d: unable to parse dimensions of cell block: %s", filename, line, text))
-				}
-
-				state = cellBlock
-			case "#N":
-				//fmt.Println("normal rules")
-			case "#R":
-				if text != "#R 23/3" {
-					log.Error(fmt.Sprintf("file '%s', line %d: only normal Conway rules are supported", filename, line))
-				}
-				//fmt.Println("rules section")
-
-			default:
-				log.Error(fmt.Sprintf("file '%s', line %d: unable to read line", filename, line))
-			}
-		case cellBlock:
-			if len(words) < 1 {
-				log.Error(fmt.Sprintf("file '%s', line %d: line too short", filename, line))
-			}
-			switch words[0] {
-			case "#P":
-				if len(words) != 3 {
-					log.Error(fmt.Sprintf("file '%s', line %d: unable to parse cell block: %s", filename, line, text))
-				}
-				parsed, err := fmt.Sscanf(text, "#P %d %d", &cellBlockX, &cellBlockY)
-				if parsed != 2 || err != nil {
-					log.Error(fmt.Sprint("file '%s', line %d: unable to parse dimensions of cell block: %s", filename, line, text))
-				}
-			default:
-				if len(words) != 1 {
-					log.Error(fmt.Sprintf("file '%s', line %d: unexpected number of words on line: %s", filename, line, len(words)))
-				}
-				for i, c := range text {
-					if c == '*' {
-						x := cellBlockX + i + (life.x / 2)
-						y := cellBlockY + (life.y / 2)
-						if x < 0 || x >= life.x {
-							log.Error(fmt.Sprintf("file '%s', line %d, pos %d: x (%d) is out of bounds [%d, %d)", filename, line, i+1, x, 0, life.x))
-						} else if y < 0 || y > life.y {
-							log.Error(fmt.Sprintf("file '%s', line %d, pos %d: y (%d) is out of bounds [%d, %d)", filename, line, i+1, y, 0, life.y))
-						} else {
-							life.mat[x][y].alive = true
-						}
+				if parsed == 4 {
+					// we only support patterns from standard rules, error out
+					if B != 3 && S != 23 {
+						error_msg := fmt.Sprintf("line %d: unsupported ruleset for life", line)
+						log.Error(error_msg)
+						return errors.New("unsupported data in RLE file")
 					}
 				}
-				cellBlockY = cellBlockY + 1
+				if x >= life.x || y >= life.y {
+					error_msg := fmt.Sprintf("line %d: pattern dimensions exceed matrix size (%d by %d)", line, x, y)
+					log.Error(error_msg)
+					return errors.New("pattern too large for current run")
+				}
+				if state == start && err != nil {
+					log.Error(fmt.Sprintf("line %d: an error occurred parsing the pattern format line", line))
+				} else {
+					log.Info(fmt.Sprintf("input pattern is %d by %d and loaded without a problem", x, y))
+				}
 			}
-
-		default:
-			log.Error("unknown parser state")
+		case formatKnown:
+			if len(words) < 1 {
+				log.Error(fmt.Sprintf("line %d: line too short", line))
+			}
 		}
 		line += 1
 	}
