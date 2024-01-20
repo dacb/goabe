@@ -6,8 +6,6 @@ import (
 	"math/rand"
 	"os"
 
-	"github.com/dacb/goabe/example"
-	"github.com/dacb/goabe/life"
 	"github.com/dacb/goabe/logger"
 
 	"github.com/spf13/cobra"
@@ -57,9 +55,8 @@ func init() {
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	// register the plugins
-	// this should be done with a go generate
-	example.Register()
-	life.Register()
+	//go:generate make plugins
+	registerPlugins()
 }
 
 // initConfig sets default config values and reads in config from input, if possible.
