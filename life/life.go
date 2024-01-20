@@ -47,11 +47,13 @@ func Init(ctx context.Context) error {
 	log.Info(fmt.Sprintf("Life plugin Init function was called for %d threads", threads))
 
 	// initialize the data structures for the module
-	viper.SetDefault("life_map", map[string]int{"x": 16, "y": 32})
-	viper.SetDefault("life_io", map[string]string{"in": "IN.LIF", "out": "OUT.LIF"})
+	//viper.SetDefault("life.in_filename", "IN.LIF")
+	viper.SetDefault("life.out_filename", "OUT.LIF")
 
-	life.x = viper.Get("life_map")["x"]
-	life.y = viper.Get("life_map")["y"]
+	viper.SetDefault("life.x_size", 16)
+	viper.SetDefault("life.y_size", 32)
+	life.x = viper.GetInt("life.x_size")
+	life.y = viper.GetInt("life.y_size")
 
 	if life.x < 3 || life.y < 3 {
 		log.Error("minimum size of matrix must be 3 x 3")
@@ -109,14 +111,19 @@ func Init(ctx context.Context) error {
 	}
 
 	// initialize the matrix states
-	aliveCells := 0
-	for idx := 0; idx < life.x*life.y; idx++ {
-		life.cells[idx].alive = rand.Uint32()&(1<<31) == 0 // random true false from integer
-		if life.cells[idx].alive {
-			aliveCells += 1
+	filename := viper.GetString("life.in_filename")
+	if filename != "" {
+		fmt.Printf("filename = %s\n", filename)
+	} else {
+		aliveCells := 0
+		for idx := 0; idx < life.x*life.y; idx++ {
+			life.cells[idx].alive = rand.Uint32()&(1<<31) == 0 // random true false from integer
+			if life.cells[idx].alive {
+				aliveCells += 1
+			}
 		}
+		log.Info(fmt.Sprintf("there are %d alive cells at the start", aliveCells))
 	}
-	log.Info(fmt.Sprintf("there are %d alive cells at the start", aliveCells))
 
 	return nil
 }
