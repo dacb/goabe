@@ -1,0 +1,18 @@
+#C goabe life plugin v0.1.0
+x = 16, y = 16, rule = B3/S23
+2b2o5b2o$
+3b2o3b2o$
+o2bobobobo2bo$
+3ob2ob2ob3o$
+bobobobobobo$
+2b3o3b3o$
+$
+2b3o3b3o$
+bobobobobobo$
+3ob2ob2ob3o$
+o2bobobobo2bo$
+3b2o3b2o$
+2b2o5b2o$
+$
+$
+!

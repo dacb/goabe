@@ -1,0 +1,13 @@
+{
+  "life": {
+    "in_filename": "in.rle",
+    "out_filename": "out.rle",
+    "x_size": 16,
+    "y_size": 16
+  },
+  "log_file": "goabe.log.json",
+  "log_level": "INFO",
+  "plugin_dirs": "plugins",
+  "random_seed": 1705713401782936122,
+  "substeps": 10
+}
