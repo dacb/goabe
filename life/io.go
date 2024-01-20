@@ -145,7 +145,7 @@ func (life *matrix) loadMatrix(ctx context.Context, filename string) error {
 						return errors.New("unsupported data in RLE file")
 					}
 				}
-				if x >= life.x || y >= life.y {
+				if x < 0 || x > life.x || y < 0 || y > life.y {
 					error_msg := fmt.Sprintf("line %d: pattern dimensions exceed matrix size (%d by %d)", line, x, y)
 					log.Error(error_msg)
 					return errors.New("pattern too large for current run")
