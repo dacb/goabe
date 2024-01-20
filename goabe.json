@@ -7,7 +7,6 @@
   },
   "log_file": "goabe.log.json",
   "log_level": "INFO",
-  "plugin_dirs": "plugins",
-  "random_seed": 1705713401782936122,
+  "random_seed": 42,
   "substeps": 10
 }
