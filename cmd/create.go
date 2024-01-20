@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/dacb/goabe/logger"
+	"github.com/dacb/goabe/plugins"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,22 +17,24 @@ var createCmd = &cobra.Command{
 	Short: "Create a configuration file with default options.",
 	Long:  `This saves a default configuration to the file for future modificaiton and usage`,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Log.With(
+		log := logger.Log.With(
 			slog.Group("cmd",
 				slog.String("cmd", "config"),
 				slog.String("sub", "create"),
 				slog.String("config_file", viper.ConfigFileUsed()),
 			),
-		).Info("create called to save out the configuration; will not overwrite an existing file")
-		err := viper.SafeWriteConfig()
+		)
+		log.Info("create called to save out the configuration; will not overwrite an existing file")
+		ctx := context.WithValue(cmd.Context(), "log", log)
+		// load the plugins to get their default configs, if any
+		err := plugins.LoadPlugins(ctx)
 		if err != nil {
-			logger.Log.With(
-				slog.Group("cmd",
-					slog.String("cmd", "config"),
-					slog.String("sub", "create"),
-					slog.String("config_file", viper.ConfigFileUsed()),
-				),
-			).Error("unable to safe write configuration file, does it already exist?")
+			log.Error("an error occurred loading the plugins")
+			panic(err)
+		}
+		err = viper.SafeWriteConfig()
+		if err != nil {
+			log.Error("unable to safe write configuration file, does it already exist?")
 		}
 	},
 }
