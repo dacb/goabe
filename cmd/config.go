@@ -48,5 +48,4 @@ func init() {
 	viper.SetDefault("log_file", "goabe.log.json")
 	viper.SetDefault("substeps", 10)
 	viper.SetDefault("random_seed", time.Now().UnixNano())
-	viper.SetDefault("plugin_dirs", "plugins")
 }
