@@ -140,22 +140,6 @@ func GetHooks() []plugins.Hook {
 	return hooks
 }
 
-func printMatrix(ctx context.Context) error {
-	//time.Sleep(1 * time.Second)
-	fmt.Print("\033[H\033[2J")
-	for xi := 0; xi < life.x; xi++ {
-		for yi := 0; yi < life.y; yi++ {
-			c := '.'
-			if life.mat[xi][yi].alive {
-				c = 'X'
-			}
-			fmt.Printf(" %c", c)
-		}
-		fmt.Printf("\n")
-	}
-	return nil
-}
-
 // note this logs through the context
 func CoreSubStep1(ctx context.Context) error {
 	log := ctx.Value("log").(*slog.Logger).With("plugin", Name())
@@ -167,7 +151,7 @@ func CoreSubStep1(ctx context.Context) error {
 		}
 	}
 	log.Info(fmt.Sprintf("%d alive cells", aliveCells))
-	printMatrix(ctx)
+	life.printMatrix(ctx)
 	return nil
 }
 
