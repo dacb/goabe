@@ -8,6 +8,7 @@ import (
 	"math/rand"
 
 	"github.com/dacb/goabe/plugins"
+	"github.com/spf13/viper"
 )
 
 type cell struct {
@@ -46,8 +47,10 @@ func Init(ctx context.Context) error {
 	log.Info(fmt.Sprintf("Life plugin Init function was called for %d threads", threads))
 
 	// initialize the data structures for the module
-	life.x = 8
-	life.y = 16
+	viper.SetDefault("life_x_size", 16)
+	viper.SetDefault("life_y_size", 32)
+	life.x = viper.GetInt("life_x_size")
+	life.y = viper.GetInt("life_y_size")
 
 	if life.x < 3 || life.y < 3 {
 		log.Error("minimum size of matrix must be 3 x 3")
