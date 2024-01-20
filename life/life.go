@@ -47,10 +47,11 @@ func Init(ctx context.Context) error {
 	log.Info(fmt.Sprintf("Life plugin Init function was called for %d threads", threads))
 
 	// initialize the data structures for the module
-	viper.SetDefault("life_x_size", 16)
-	viper.SetDefault("life_y_size", 32)
-	life.x = viper.GetInt("life_x_size")
-	life.y = viper.GetInt("life_y_size")
+	viper.SetDefault("life_map", map[string]int{"x": 16, "y": 32})
+	viper.SetDefault("life_io", map[string]string{"in": "IN.LIF", "out": "OUT.LIF"})
+
+	life.x = viper.Get("life_map")["x"]
+	life.y = viper.Get("life_map")["y"]
 
 	if life.x < 3 || life.y < 3 {
 		log.Error("minimum size of matrix must be 3 x 3")
