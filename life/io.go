@@ -118,7 +118,7 @@ func (life *matrix) loadMatrix(ctx context.Context, filename string) error {
 	state := start
 	line := 1
 	var x, y, B, S int // x, y dimensions of pattern, B and S are rule values
-	//xi := 0
+	xi := 0
 	yi := 0
 	for scanner.Scan() {
 		log := log.With("matrix_file", filename)
@@ -171,7 +171,7 @@ func (life *matrix) loadMatrix(ctx context.Context, filename string) error {
 			for i := 0; i < len(split); i++ {
 				//fmt.Printf("word: %s\n", split[i])
 				var n int
-				parsed := fmt.Sscanf(split[i], "%d", &n)
+				parsed, _ := fmt.Sscanf(split[i], "%d", &n)
 				if parsed != 1 {
 					n = 1
 				}
@@ -180,9 +180,24 @@ func (life *matrix) loadMatrix(ctx context.Context, filename string) error {
 				for ni := 0; ni < n; ni++ {
 					switch c {
 					case 'o':
+						if xi < 0 || xi >= life.x || yi < 0 || yi >= life.y {
+							msg := fmt.Sprintf("line %d: x (%d) or y (%d) dimensions out of range (%d, %d) when parsing RLE data\n", line, xi, yi, life.x, life.y)
+							log.Error(msg)
+							return errors.New("unable to parse the pattern from the file due to invalid sizes")
+						}
+						life.mat[xi][yi].alive = true
+						xi = xi + 1
 					case 'b':
+						if xi < 0 || xi >= life.x || yi < 0 || yi >= life.y {
+							msg := fmt.Sprintf("line %d: x (%d) or y (%d) dimensions out of range (%d, %d) when parsing RLE data\n", line, xi, yi, life.x, life.y)
+							log.Error(msg)
+							return errors.New("unable to parse the pattern from the file due to invalid sizes")
+						}
+						life.mat[xi][yi].alive = false
+						xi = xi + 1
 					case '$':
 						yi = yi + 1
+						xi = 0
 					case '!':
 						state = done
 						break
