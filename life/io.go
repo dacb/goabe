@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -98,8 +99,10 @@ type parserState int
 const (
 	start parserState = iota
 	formatKnown
+	done
 )
 
+// makes no assumptions about the matrix being empty
 func (life *matrix) loadMatrix(ctx context.Context, filename string) error {
 	log := ctx.Value("log").(*slog.Logger)
 
@@ -115,11 +118,15 @@ func (life *matrix) loadMatrix(ctx context.Context, filename string) error {
 	state := start
 	line := 1
 	var x, y, B, S int // x, y dimensions of pattern, B and S are rule values
+	//xi := 0
+	yi := 0
 	for scanner.Scan() {
 		log := log.With("matrix_file", filename)
 		text := scanner.Text()
 		words := strings.Fields(text)
 		switch state {
+		case done:
+			break
 		case start:
 			if len(words) < 1 {
 				log.Warn(fmt.Sprintf("line %d: expecting to find a non-empty line", line))
@@ -153,13 +160,46 @@ func (life *matrix) loadMatrix(ctx context.Context, filename string) error {
 			if len(words) < 1 {
 				log.Error(fmt.Sprintf("line %d: line too short", line))
 			}
+			// to parse these lines, lets split the entire string
+			// then we will join tokens that are numbers until we
+			// have only alternating numbers and letters or just
+			// letters
+			re := regexp.MustCompile("([0-9])*(.){1}")
+			split := re.FindAllString(text, -1)
+			//fmt.Printf("found %d words in text: %s\n", len(split), text)
+			//fmt.Printf("%q\n", split)
+			for i := 0; i < len(split); i++ {
+				//fmt.Printf("word: %s\n", split[i])
+				var n int
+				parsed := fmt.Sscanf(split[i], "%d", &n)
+				if parsed != 1 {
+					n = 1
+				}
+				// last character of this word is the type
+				c := split[i][len(split[i])-1]
+				for ni := 0; ni < n; ni++ {
+					switch c {
+					case 'o':
+					case 'b':
+					case '$':
+						yi = yi + 1
+					case '!':
+						state = done
+						break
+					default:
+						msg := fmt.Sprintf("line %d: unexpected character found '%c'\n", line, c)
+						log.Error(msg)
+						return errors.New("unable to parse the pattern from the file")
+					}
+				}
+			}
 		}
 		line += 1
 	}
 	if state == start {
 		msg := fmt.Sprintf("no valid matrix found in file '%s'", filename)
 		log.Error(msg)
-		return errors.New(msg)
+		return errors.New("unable to parse input file")
 	}
 
 	if err := scanner.Err(); err != nil {
