@@ -27,6 +27,8 @@ type matrix struct {
 var life matrix
 var threads int
 
+var rng *rand.Rand
+
 func Register() {
 	plugins.LoadedPlugins = append(plugins.LoadedPlugins, plugins.Plugin{Init, Name, Version, Description, GetHooks, PreRun, PostRun})
 }
@@ -44,7 +46,11 @@ func Init(ctx context.Context) error {
 	}
 	threads = threadCount
 
-	log.Info(fmt.Sprintf("Life plugin Init function was called for %d threads", threads))
+	// initialize the random seed
+	random_seed := viper.GetInt64("random_seed")
+	rng = rand.New(rand.NewSource((random_seed)))
+
+	log.Info(fmt.Sprintf("Life plugin Init function was called for %d threads w/ %d as random_seed", threads, random_seed))
 
 	// initialize the data structures for the module
 	//viper.SetDefault("life.in_filename", "IN.LIF")
@@ -122,7 +128,7 @@ func Init(ctx context.Context) error {
 	} else {
 		aliveCells := 0
 		for idx := 0; idx < life.x*life.y; idx++ {
-			life.cells[idx].alive = rand.Uint32()&(1<<31) == 0 // random true false from integer
+			life.cells[idx].alive = rng.Uint32()&(1<<31) == 0 // random true false from integer
 			if life.cells[idx].alive {
 				aliveCells += 1
 			}
