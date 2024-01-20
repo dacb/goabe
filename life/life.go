@@ -113,7 +113,12 @@ func Init(ctx context.Context) error {
 	// initialize the matrix states
 	filename := viper.GetString("life.in_filename")
 	if filename != "" {
-		fmt.Printf("filename = %s\n", filename)
+		err := life.loadMatrix(ctx, filename)
+		if err != nil {
+			log.Error(fmt.Sprintf("unable to load starting matrix file file '%s'", filename))
+			return err
+		}
+		life.printMatrix(ctx)
 	} else {
 		aliveCells := 0
 		for idx := 0; idx < life.x*life.y; idx++ {
