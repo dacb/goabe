@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"os"
 
 	"github.com/dacb/goabe/logger"
@@ -97,9 +96,4 @@ func initConfig() {
 		logger.Log.Info("no configuration file found and/or specified; using defaults")
 	}
 	logger.Log.Info(fmt.Sprintf("using %d threads", Threads))
-
-	// initialize the random seed
-	random_seed := viper.GetInt64("random_seed")
-	rand.Seed(random_seed)
-	logger.Log.Info(fmt.Sprintf("using %d as the random seed", random_seed))
 }
