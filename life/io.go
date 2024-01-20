@@ -13,8 +13,8 @@ import (
 func (life *matrix) printMatrix(ctx context.Context) error {
 	//time.Sleep(1 * time.Second)
 	fmt.Print("\033[H\033[2J")
-	for xi := 0; xi < life.x; xi++ {
-		for yi := 0; yi < life.y; yi++ {
+	for yi := 0; yi < life.y; yi++ {
+		for xi := 0; xi < life.x; xi++ {
 			c := '.'
 			if life.mat[xi][yi].alive {
 				c = 'X'
@@ -39,6 +39,56 @@ func (life *matrix) saveMatrix(ctx context.Context, filename string) error {
 	major, minor, build := Version()
 	file.WriteString(fmt.Sprintf("#C goabe life plugin v%d.%d.%d\n", major, minor, build))
 	file.WriteString(fmt.Sprintf("x = %d, y = %d, rule = B3/S23\n", life.x, life.y))
+	var c = '-' // unknown state, b = dead, o = alive
+	for y := 0; y < life.y; y++ {
+		n := 0
+		c = '-'
+		for x := 0; x < life.x; x++ {
+			if life.mat[x][y].alive {
+				if c == '-' {
+					n = 1
+					c = 'o'
+				} else if c == 'b' {
+					if n > 1 {
+						file.WriteString(fmt.Sprintf("%d%c", n, c))
+					} else {
+						file.WriteString(fmt.Sprintf("%c", c))
+					}
+					c = 'o'
+					n = 1
+				} else {
+					n = n + 1
+				}
+			} else {
+				if c == '-' {
+					n = 1
+					c = 'b'
+				} else if c == 'o' {
+					if n > 1 {
+						file.WriteString(fmt.Sprintf("%d%c", n, c))
+					} else {
+						file.WriteString(fmt.Sprintf("%c", c))
+					}
+					c = 'b'
+					n = 1
+				} else {
+					n = n + 1
+				}
+			}
+		}
+		if c == 'o' {
+			if n > 1 {
+				file.WriteString(fmt.Sprintf("%d%c", n, c))
+			} else {
+				file.WriteString(fmt.Sprintf("%c", c))
+			}
+		}
+		if y != life.y-1 {
+			file.WriteString("$\n")
+		} else {
+			file.WriteString("!\n")
+		}
+	}
 
 	return nil
 }
