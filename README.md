@@ -48,4 +48,20 @@ Note that .LIF file format was removed, but could be found in `git` history.
 ### RLE data
 Catalog is here: https://catagolue.hatsya.com/home
 
-The `in.rle` file contains a basic pattern with a three step repeat.
+The `in.rle` file contains a basic pattern with a three step repeat. It can
+be used with a `goabe.json` file like the following that specifies
+`life.in_filename` and `life.out_filename`.
+```
+{
+  "life": {
+    "in_filename": "in.rle",
+    "out_filename": "out.rle",
+    "x_size": 16,
+    "y_size": 16
+  },
+  "log_file": "goabe.log.json",
+  "log_level": "INFO",
+  "random_seed": 42
+  "substeps": 10
+}
+```
