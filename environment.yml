@@ -1,7 +1,0 @@
-name: goenv
-channels:
-  - conda-forge
-  - defaults
-dependencies:
-  - go=1.21.5
-prefix: /home/dacb/miniconda3/envs/goenv
