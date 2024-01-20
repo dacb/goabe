@@ -87,6 +87,14 @@ func runCore(ctx context.Context, threads int) {
 	// this is the logger from the command context
 	log := ctx.Value("log").(*slog.Logger)
 
+	for _, plugin := range plugins.LoadedPlugins {
+		err := plugin.PreRun(ctx)
+		if err != nil {
+			log.Error("an error occurred while trying to run the PreRun function for the '%s' plugin", plugin.Name())
+			panic(err)
+		}
+	}
+
 	subSteps := viper.GetInt("substeps")
 	// this waitgroup is used to signal the close of the threads
 	wgThreadsDone := new(sync.WaitGroup)
@@ -163,6 +171,16 @@ func runCore(ctx context.Context, threads int) {
 	log.Debug("waiting for threads")
 	wgThreadsDone.Wait()
 	log.Debug("done")
+
+	// call the plugin postruns
+	for _, plugin := range plugins.LoadedPlugins {
+		err := plugin.PostRun(ctx)
+		if err != nil {
+			log.Error("an error occurred while trying to run the PostRun function for the '%s' plugin", plugin.Name())
+			panic(err)
+		}
+	}
+
 }
 
 func runThread(ctx context.Context, wgDone *sync.WaitGroup, syncChan chan engineMsg, name string, id int) {

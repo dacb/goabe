@@ -18,6 +18,8 @@ type PluginName func() string
 type PluginVersion func() (int, int, int)
 type PluginDescription func() string
 type PluginGetHooks func() []Hook
+type PluginPreRun func(context.Context) error
+type PluginPostRun func(context.Context) error
 
 type Plugin struct {
 	Init        PluginInit
@@ -25,6 +27,8 @@ type Plugin struct {
 	Version     PluginVersion
 	Description PluginDescription
 	GetHooks    PluginGetHooks
+	PreRun      PluginPreRun
+	PostRun     PluginPostRun
 }
 
 var LoadedPlugins []Plugin

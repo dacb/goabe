@@ -13,7 +13,7 @@ var log *slog.Logger
 var threads int
 
 func Register() {
-	plugins.LoadedPlugins = append(plugins.LoadedPlugins, plugins.Plugin{Init, Name, Version, Description, GetHooks})
+	plugins.LoadedPlugins = append(plugins.LoadedPlugins, plugins.Plugin{Init, Name, Version, Description, GetHooks, PreRun, PostRun})
 }
 
 // main initiailization function for the plugin
@@ -47,6 +47,16 @@ func Name() string {
 // returns a short description of the module as a string
 func Description() string {
 	return "example plugin for code template"
+}
+
+// do before each set of steps
+func PreRun(ctx context.Context) error {
+	return nil
+}
+
+// do after each set of steps
+func PostRun(ctx context.Context) error {
+	return nil
 }
 
 func GetHooks() []plugins.Hook {
